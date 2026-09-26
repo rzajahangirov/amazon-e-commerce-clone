@@ -87,6 +87,8 @@ public class ProductServiceImpl implements ProductService {
                 .basePrice(product.getBasePrice())
                 .status(product.getStatus())
                 .variants(variantDtos)
+                .averageRating(product.getAverageRating() != null ? product.getAverageRating() : 0.0)
+                .totalReviews(product.getTotalReviews() != null ? product.getTotalReviews() : 0)
                 .createdAt(product.getCreatedAt())
                 .updatedAt(product.getUpdatedAt())
                 .build();

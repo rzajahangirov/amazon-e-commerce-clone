@@ -32,6 +32,10 @@ public class ProductResponseDto {
     private BigDecimal basePrice;
     private ProductStatus status;
     private List<ProductVariantResponseDto> variants;
+    @Builder.Default
+    private Double averageRating = 0.0;
+    @Builder.Default
+    private Integer totalReviews = 0;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

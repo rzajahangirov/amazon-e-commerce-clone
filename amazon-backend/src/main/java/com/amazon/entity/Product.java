@@ -67,6 +67,22 @@ public class Product extends BaseEntity {
     @Builder.Default
     private List<ProductVariant> variants = new ArrayList<>();
 
+    @Column(name = "average_rating")
+    @Builder.Default
+    private Double averageRating = 0.0;
+
+    @Column(name = "total_reviews")
+    @Builder.Default
+    private Integer totalReviews = 0;
+
+    public Double getAverageRating() {
+        return averageRating != null ? averageRating : 0.0;
+    }
+
+    public Integer getTotalReviews() {
+        return totalReviews != null ? totalReviews : 0;
+    }
+
     public UUID getBrandId() {
         return brand != null ? brand.getId() : null;
     }

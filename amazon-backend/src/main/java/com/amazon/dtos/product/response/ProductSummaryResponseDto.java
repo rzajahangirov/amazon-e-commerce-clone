@@ -23,4 +23,8 @@ public class ProductSummaryResponseDto {
     private BigDecimal basePrice;
     private String categoryName;
     private ProductStatus status;
+    @Builder.Default
+    private Double averageRating = 0.0;
+    @Builder.Default
+    private Integer totalReviews = 0;
 }
