@@ -8,7 +8,9 @@ public enum AuthError {
 
     EMAIL_ALREADY_EXISTS("This email is already registered"),
     INVALID_CREDENTIALS("Email or password is incorrect"),
-    USER_NOT_FOUND("User not found");
+    USER_NOT_FOUND("User not found"),
+    ACCOUNT_INACTIVE("User account is inactive, suspended, or deleted"),
+    ROLE_NOT_FOUND("Role not found");
 
     private final String message;
 

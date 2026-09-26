@@ -1,13 +1,17 @@
 package com.amazon.dtos.user.response;
 
-import com.amazon.enums.RoleType;
+import com.amazon.enums.UserStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.Set;
+import java.util.UUID;
+
 /**
  * Response DTO for user information returned in API responses.
+ * Never leaks password hashes or internal-only fields.
  */
 @Data
 @NoArgsConstructor
@@ -15,9 +19,10 @@ import lombok.NoArgsConstructor;
 @Builder
 public class UserResponseDto {
 
-    private Long id;
-    private String name;
-    private String surname;
+    private UUID id;
+    private String fullName;
     private String email;
-    private RoleType role;
+    private String phone;
+    private UserStatus status;
+    private Set<String> roles;
 }
