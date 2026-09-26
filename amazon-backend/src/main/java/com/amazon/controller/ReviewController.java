@@ -14,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
@@ -33,6 +34,7 @@ public class ReviewController {
     private final ReviewService reviewService;
 
     @PostMapping
+    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Submit a product review", description = "Allows an authenticated customer to submit a 1-5 star rating and optional review")
     public ResponseEntity<ResponseDto<ReviewResponseDto>> createReview(
             @PathVariable UUID productId,
@@ -46,6 +48,7 @@ public class ReviewController {
     }
 
     @GetMapping
+    @PreAuthorize("permitAll()")
     @Operation(summary = "Get product reviews", description = "Retrieves a paginated list of reviews for a specific product")
     public ResponseEntity<ResponseDto<PaginationPayload<ReviewResponseDto>>> getProductReviews(
             @PathVariable UUID productId,
@@ -55,6 +58,7 @@ public class ReviewController {
     }
 
     @PutMapping("/{reviewId}")
+    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Update a review", description = "Allows the review author or an ADMIN to update rating and comment")
     public ResponseEntity<ResponseDto<ReviewResponseDto>> updateReview(
             @PathVariable UUID productId,
@@ -68,6 +72,7 @@ public class ReviewController {
     }
 
     @DeleteMapping("/{reviewId}")
+    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Delete a review", description = "Allows the review author or an ADMIN to delete a review")
     public ResponseEntity<ResponseDto<Void>> deleteReview(
             @PathVariable UUID productId,
@@ -80,6 +85,7 @@ public class ReviewController {
     }
 
     @GetMapping("/{reviewId}")
+    @PreAuthorize("permitAll()")
     @Operation(summary = "Get review by ID", description = "Retrieves details of a specific review")
     public ResponseEntity<ResponseDto<ReviewResponseDto>> getReviewById(
             @PathVariable UUID productId,
@@ -88,6 +94,7 @@ public class ReviewController {
     }
 
     @GetMapping("/my-review")
+    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Get current user's review", description = "Retrieves the authenticated user's review for this product if one exists")
     public ResponseEntity<ResponseDto<ReviewResponseDto>> getMyReviewForProduct(
             @PathVariable UUID productId,

@@ -25,6 +25,7 @@ import java.util.UUID;
  */
 @RestController
 @RequestMapping("v1/api/orders")
+@PreAuthorize("isAuthenticated()")
 @RequiredArgsConstructor
 @Tag(name = "Orders", description = "Customer checkout and order lifecycle management")
 @Slf4j
@@ -70,8 +71,13 @@ public class OrderController {
         return ResponseEntity.ok(orderService.getMyOrders(email, page, size));
     }
 
+    /**
+     * Top-level Order encompasses multi-seller order items; only Platform Admins can override root
+     * order status for global dispute resolution/fraud cancellation.
+     * Normal sellers MUST use PUT /v1/api/seller-dashboard/orders/{orderItemId}/status to manage item-level fulfillment.
+     */
     @PutMapping("/{id}/status")
-    @PreAuthorize("hasAnyRole('ADMIN', 'SELLER')")
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Update order status", description = "Updates order fulfillment status (e.g. PROCESSING, SHIPPED, DELIVERED)")
     public ResponseEntity<ResponseDto<OrderResponseDto>> updateOrderStatus(
             @PathVariable UUID id,

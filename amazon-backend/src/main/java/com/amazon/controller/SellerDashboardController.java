@@ -15,6 +15,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
@@ -25,10 +26,14 @@ import java.util.UUID;
  * REST controller for Standalone Seller Dashboard.
  * Injects Principal and passes ONLY the email string to the service layer.
  * All operations enforce strict seller-scoped data isolation.
+ * Strictly restricted to users holding the ROLE_SELLER authority.
+ * Pure administrators (ROLE_ADMIN) without an active, verified seller profile/role are forbidden
+ * from accessing the seller dashboard to enforce strict tenant isolation.
  * Adheres to Senior Backend Developer Guidelines Section 1, 3, 4, 10.2.
  */
 @RestController
 @RequestMapping("/v1/api/seller-dashboard")
+@PreAuthorize("hasRole('SELLER')")
 @RequiredArgsConstructor
 @Tag(name = "Seller Dashboard", description = "Seller listing management, order fulfillment, profile, and analytics")
 public class SellerDashboardController {

@@ -11,6 +11,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
@@ -22,6 +23,7 @@ import java.util.UUID;
  */
 @RestController
 @RequestMapping("v1/api/cart")
+@PreAuthorize("isAuthenticated()")
 @RequiredArgsConstructor
 @Tag(name = "Cart", description = "Shopping cart management endpoints")
 @Slf4j
