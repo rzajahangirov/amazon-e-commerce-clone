@@ -42,18 +42,23 @@ public class ProductController {
     // --- Product Endpoints ---
 
     @GetMapping("/{id}")
-    @Operation(summary = "Get product by ID", description = "Retrieves product details with all associated variants")
-    public ResponseEntity<ResponseDto<ProductResponseDto>> getProductById(@PathVariable UUID id) {
-        return ResponseEntity.ok(productService.getProductById(id));
+    @Operation(summary = "Get product by ID", description = "Retrieves product details with all associated variants and favorite status")
+    public ResponseEntity<ResponseDto<ProductResponseDto>> getProductById(
+            @PathVariable UUID id,
+            Principal principal) {
+        String email = principal != null ? principal.getName() : null;
+        return ResponseEntity.ok(productService.getProductById(id, email));
     }
 
     @GetMapping
-    @Operation(summary = "Get products", description = "Paginated list of products optionally filtered by category")
+    @Operation(summary = "Get products", description = "Paginated list of products optionally filtered by category and favorite status")
     public ResponseEntity<ResponseDto<PaginationPayload<ProductResponseDto>>> getProducts(
             @RequestParam(required = false) UUID categoryId,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
-        return ResponseEntity.ok(productService.getProducts(categoryId, page, size));
+            @RequestParam(defaultValue = "20") int size,
+            Principal principal) {
+        String email = principal != null ? principal.getName() : null;
+        return ResponseEntity.ok(productService.getProducts(categoryId, page, size, email));
     }
 
     // --- Product Variant Endpoints ---

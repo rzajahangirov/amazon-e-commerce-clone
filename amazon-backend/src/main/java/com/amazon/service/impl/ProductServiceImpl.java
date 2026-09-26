@@ -3,12 +3,15 @@ package com.amazon.service.impl;
 import com.amazon.dtos.product.response.ProductResponseDto;
 import com.amazon.dtos.product.response.ProductVariantResponseDto;
 import com.amazon.entity.Product;
+import com.amazon.entity.User;
 import com.amazon.exception.ResourceNotFoundException;
 import com.amazon.payloads.ApiResponse;
 import com.amazon.payloads.CatalogError;
 import com.amazon.payloads.PaginationPayload;
 import com.amazon.payloads.ResponseDto;
 import com.amazon.repository.ProductRepository;
+import com.amazon.repository.UserRepository;
+import com.amazon.repository.WishlistItemRepository;
 import com.amazon.service.ProductService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,7 +21,10 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -31,23 +37,58 @@ import java.util.UUID;
 public class ProductServiceImpl implements ProductService {
 
     private final ProductRepository productRepository;
+    private final UserRepository userRepository;
+    private final WishlistItemRepository wishlistItemRepository;
+
     @Override
     @Transactional(readOnly = true)
     public ResponseDto<ProductResponseDto> getProductById(UUID id) {
+        return getProductById(id, null);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ResponseDto<ProductResponseDto> getProductById(UUID id, String userEmail) {
         Product product = productRepository.findPublishedWithDetailsById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(CatalogError.PRODUCT_NOT_FOUND.getMessage()));
 
-        return ApiResponse.success(mapToResponseDto(product), "Product retrieved successfully");
+        boolean isFavorited = false;
+        if (userEmail != null) {
+            Optional<User> userOpt = userRepository.findByEmail(userEmail);
+            if (userOpt.isPresent()) {
+                isFavorited = wishlistItemRepository.existsByUserIdAndProductId(userOpt.get().getId(), id);
+            }
+        }
+
+        return ApiResponse.success(mapToResponseDto(product, isFavorited), "Product retrieved successfully");
     }
 
     @Override
     @Transactional(readOnly = true)
     public ResponseDto<PaginationPayload<ProductResponseDto>> getProducts(UUID categoryId, int page, int size) {
+        return getProducts(categoryId, page, size, null);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ResponseDto<PaginationPayload<ProductResponseDto>> getProducts(UUID categoryId, int page, int size, String userEmail) {
         PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         Page<Product> productPage = productRepository.findPublished(categoryId, pageRequest);
 
+        Set<UUID> favoritedProductIds = Collections.emptySet();
+        if (userEmail != null && !productPage.getContent().isEmpty()) {
+            Optional<User> userOpt = userRepository.findByEmail(userEmail);
+            if (userOpt.isPresent()) {
+                List<UUID> pageProductIds = productPage.getContent().stream()
+                        .map(Product::getId)
+                        .toList();
+                favoritedProductIds = wishlistItemRepository.findFavoritedProductIdsByUserIdAndProductIdIn(userOpt.get().getId(), pageProductIds);
+            }
+        }
+
+        final Set<UUID> finalFavoritedIds = favoritedProductIds;
         List<ProductResponseDto> content = productPage.getContent().stream()
-                .map(this::mapToResponseDto)
+                .map(p -> mapToResponseDto(p, finalFavoritedIds.contains(p.getId())))
                 .toList();
 
         PaginationPayload<ProductResponseDto> paginationPayload = PaginationPayload.<ProductResponseDto>builder()
@@ -62,7 +103,7 @@ public class ProductServiceImpl implements ProductService {
         return ApiResponse.success(paginationPayload, "Products retrieved successfully");
     }
 
-    private ProductResponseDto mapToResponseDto(Product product) {
+    private ProductResponseDto mapToResponseDto(Product product, boolean isFavorited) {
         List<ProductVariantResponseDto> variantDtos = product.getVariants() != null
                 ? product.getVariants().stream().map(v -> ProductVariantResponseDto.builder()
                         .id(v.getId())
@@ -89,6 +130,7 @@ public class ProductServiceImpl implements ProductService {
                 .variants(variantDtos)
                 .averageRating(product.getAverageRating() != null ? product.getAverageRating() : 0.0)
                 .totalReviews(product.getTotalReviews() != null ? product.getTotalReviews() : 0)
+                .isFavorited(isFavorited)
                 .createdAt(product.getCreatedAt())
                 .updatedAt(product.getUpdatedAt())
                 .build();

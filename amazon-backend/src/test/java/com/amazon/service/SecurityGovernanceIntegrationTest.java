@@ -4,6 +4,7 @@ import com.amazon.controller.CartController;
 import com.amazon.controller.OrderController;
 import com.amazon.controller.ReviewController;
 import com.amazon.controller.SellerDashboardController;
+import com.amazon.controller.WishlistController;
 import com.amazon.dtos.order.request.UpdateOrderStatusRequestDto;
 import com.amazon.dtos.review.request.CreateReviewRequestDto;
 import com.amazon.enums.OrderStatus;
@@ -38,6 +39,9 @@ class SecurityGovernanceIntegrationTest {
 
     @Autowired
     private ReviewController reviewController;
+
+    @Autowired
+    private WishlistController wishlistController;
 
     // =========================================================================
     // 1. STRICT ADMIN-ONLY ORDER OVERRIDE (PUT /v1/api/orders/{id}/status)
@@ -149,5 +153,28 @@ class SecurityGovernanceIntegrationTest {
             assertFalse(ex instanceof AccessDeniedException);
             assertFalse(ex instanceof AuthenticationCredentialsNotFoundException);
         }
+    }
+
+    // =========================================================================
+    // 5. WISHLIST SECURITY (WishlistController requires isAuthenticated)
+    // =========================================================================
+
+    @Test
+    @DisplayName("Wishlist Controller: Reject unauthenticated user from adding to wishlist")
+    void testWishlistAddDeniedForUnauthenticated() {
+        UUID productId = UUID.randomUUID();
+        Principal principal = () -> "guest@buyer.com";
+
+        assertThrows(AuthenticationCredentialsNotFoundException.class, () ->
+                wishlistController.addToWishlist(productId, principal));
+    }
+
+    @Test
+    @DisplayName("Wishlist Controller: Reject unauthenticated user from retrieving wishlist")
+    void testWishlistGetDeniedForUnauthenticated() {
+        Principal principal = () -> "guest@buyer.com";
+
+        assertThrows(AuthenticationCredentialsNotFoundException.class, () ->
+                wishlistController.getWishlist(0, 10, principal));
     }
 }

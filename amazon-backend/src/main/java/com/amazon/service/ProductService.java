@@ -13,6 +13,9 @@ public interface ProductService {
 
     ResponseDto<ProductResponseDto> getProductById(UUID id);
 
+    ResponseDto<ProductResponseDto> getProductById(UUID id, String userEmail);
+
     ResponseDto<PaginationPayload<ProductResponseDto>> getProducts(UUID categoryId, int page, int size);
 
+    ResponseDto<PaginationPayload<ProductResponseDto>> getProducts(UUID categoryId, int page, int size, String userEmail);
 }

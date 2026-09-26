@@ -36,6 +36,8 @@ public class ProductResponseDto {
     private Double averageRating = 0.0;
     @Builder.Default
     private Integer totalReviews = 0;
+    @Builder.Default
+    private Boolean isFavorited = false;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }
