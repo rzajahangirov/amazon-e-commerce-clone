@@ -199,7 +199,7 @@ Every endpoint strictly returns `ResponseEntity<ResponseDto<T>>` to ensure predi
 - **Java 21** installed (`java -version`)
 - **PostgreSQL** running on `localhost:5432`
   ```sql
-  CREATE DATABASE amazon_db;
+  CREATE DATABASE amazon_clone_db;
   ```
 - **Redis** running on `localhost:6379` (optional for base auth)
 
