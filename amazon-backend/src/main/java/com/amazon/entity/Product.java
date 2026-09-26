@@ -20,7 +20,8 @@ import java.util.UUID;
 @Table(name = "products", indexes = {
     @Index(name = "idx_products_category_id", columnList = "category_id"),
     @Index(name = "idx_products_seller_id", columnList = "created_by_seller_id"),
-    @Index(name = "idx_products_status", columnList = "status")
+    @Index(name = "idx_products_status", columnList = "status"),
+    @Index(name = "idx_products_brand_id", columnList = "brand_id")
 })
 @SQLDelete(sql = "UPDATE products SET deleted_at = CURRENT_TIMESTAMP WHERE id = ?")
 @SQLRestriction("deleted_at IS NULL")
@@ -29,7 +30,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@ToString(exclude = {"seller", "category", "variants"})
+@ToString(exclude = {"seller", "category", "variants", "brand"})
 public class Product extends BaseEntity {
 
     @Id
@@ -40,8 +41,9 @@ public class Product extends BaseEntity {
     @JoinColumn(name = "created_by_seller_id")
     private User seller;
 
-    @Column(name = "brand_id")
-    private UUID brandId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "brand_id")
+    private Brand brand;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "category_id", nullable = false)
@@ -64,6 +66,10 @@ public class Product extends BaseEntity {
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<ProductVariant> variants = new ArrayList<>();
+
+    public UUID getBrandId() {
+        return brand != null ? brand.getId() : null;
+    }
 
     @Override
     public boolean equals(Object o) {

@@ -4,6 +4,7 @@ import com.amazon.dtos.product.request.CreateProductRequestDto;
 import com.amazon.dtos.product.request.UpdateProductRequestDto;
 import com.amazon.dtos.product.response.ProductResponseDto;
 import com.amazon.dtos.product.response.ProductVariantResponseDto;
+import com.amazon.entity.Brand;
 import com.amazon.entity.Category;
 import com.amazon.entity.Product;
 import com.amazon.entity.User;
@@ -15,6 +16,7 @@ import com.amazon.payloads.AuthError;
 import com.amazon.payloads.CatalogError;
 import com.amazon.payloads.PaginationPayload;
 import com.amazon.payloads.ResponseDto;
+import com.amazon.repository.BrandRepository;
 import com.amazon.repository.CategoryRepository;
 import com.amazon.repository.ProductRepository;
 import com.amazon.repository.UserRepository;
@@ -42,6 +44,7 @@ public class ProductServiceImpl implements ProductService {
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
     private final UserRepository userRepository;
+    private final BrandRepository brandRepository;
 
     @Override
     @Transactional
@@ -52,10 +55,16 @@ public class ProductServiceImpl implements ProductService {
         Category category = categoryRepository.findById(request.getCategoryId())
                 .orElseThrow(() -> new ResourceNotFoundException(CatalogError.CATEGORY_NOT_FOUND.getMessage()));
 
+        Brand brand = null;
+        if (request.getBrandId() != null) {
+            brand = brandRepository.findById(request.getBrandId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Brand not found with id: " + request.getBrandId()));
+        }
+
         Product product = Product.builder()
                 .seller(seller)
                 .category(category)
-                .brandId(request.getBrandId())
+                .brand(brand)
                 .title(request.getTitle().trim())
                 .description(request.getDescription())
                 .basePrice(request.getBasePrice())
@@ -133,7 +142,9 @@ public class ProductServiceImpl implements ProductService {
             product.setBasePrice(request.getBasePrice());
         }
         if (request.getBrandId() != null) {
-            product.setBrandId(request.getBrandId());
+            Brand brand = brandRepository.findById(request.getBrandId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Brand not found with id: " + request.getBrandId()));
+            product.setBrand(brand);
         }
         if (request.getStatus() != null) {
             product.setStatus(request.getStatus());
@@ -179,7 +190,8 @@ public class ProductServiceImpl implements ProductService {
                 .id(product.getId())
                 .sellerId(product.getSeller() != null ? product.getSeller().getId() : null)
                 .sellerName(product.getSeller() != null ? product.getSeller().getFullName() : null)
-                .brandId(product.getBrandId())
+                .brandId(product.getBrand() != null ? product.getBrand().getId() : null)
+                .brandName(product.getBrand() != null ? product.getBrand().getName() : null)
                 .categoryId(product.getCategory() != null ? product.getCategory().getId() : null)
                 .categoryName(product.getCategory() != null ? product.getCategory().getName() : null)
                 .title(product.getTitle())

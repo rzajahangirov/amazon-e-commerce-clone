@@ -6,7 +6,9 @@ import lombok.*;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -27,7 +29,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@ToString(exclude = {"roles"})
+@ToString(exclude = {"roles", "sellerProfile", "brandMembers", "ownedBrands", "authoredBrandPosts", "brandUpdateRequests"})
 public class User extends BaseEntity {
 
     @Id
@@ -58,6 +60,25 @@ public class User extends BaseEntity {
     )
     @Builder.Default
     private Set<Role> roles = new HashSet<>();
+
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private SellerProfile sellerProfile;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @Builder.Default
+    private List<BrandMember> brandMembers = new ArrayList<>();
+
+    @OneToMany(mappedBy = "ownerUser", fetch = FetchType.LAZY)
+    @Builder.Default
+    private List<Brand> ownedBrands = new ArrayList<>();
+
+    @OneToMany(mappedBy = "authorUser", fetch = FetchType.LAZY)
+    @Builder.Default
+    private List<BrandPost> authoredBrandPosts = new ArrayList<>();
+
+    @OneToMany(mappedBy = "requestedByUser", fetch = FetchType.LAZY)
+    @Builder.Default
+    private List<BrandUpdateRequest> brandUpdateRequests = new ArrayList<>();
 
     public boolean isActive() {
         return status == UserStatus.ACTIVE;
