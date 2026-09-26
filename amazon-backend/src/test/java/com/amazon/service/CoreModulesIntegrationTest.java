@@ -29,6 +29,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.Map;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -118,12 +119,14 @@ class CoreModulesIntegrationTest {
         CreateVariantRequestDto variantDto = CreateVariantRequestDto.builder()
                 .asin("B09B8V1LZ3")
                 .variantName("Charcoal Black")
-                .variantAttributesJson("{\"color\": \"Charcoal\"}")
+                .variantAttributes(Map.of("color", "Charcoal"))
                 .build();
         ResponseDto<ProductVariantResponseDto> variantResponse = productVariantService.createVariant(productId, variantDto);
         UUID variantId = variantResponse.getData().getId();
         assertNotNull(variantId);
         assertEquals("B09B8V1LZ3", variantResponse.getData().getAsin());
+        assertNotNull(variantResponse.getData().getVariantAttributes());
+        assertEquals("Charcoal", variantResponse.getData().getVariantAttributes().get("color"));
 
         // 5. Create Product Listing
         CreateListingRequestDto listingDto = CreateListingRequestDto.builder()

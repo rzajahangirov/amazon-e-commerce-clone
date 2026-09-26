@@ -23,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -263,6 +264,7 @@ class BrandModuleIntegrationTest {
                 .basePrice(new BigDecimal("1199.99"))
                 .asin("B09SAMS26U")
                 .variantName("Titanium Gray / 512GB")
+                .variantAttributes(Map.of("color", "Titanium Gray", "storage", "512GB"))
                 .sellerSku("SAM-S26U-512-GRY")
                 .price(new BigDecimal("1199.99"))
                 .stockQuantity(150)
@@ -276,6 +278,8 @@ class BrandModuleIntegrationTest {
         assertNotNull(quickResp.getData().getListingId());
         assertEquals("Galaxy S26 Ultra", quickResp.getData().getProductTitle());
         assertEquals(150, quickResp.getData().getStockQuantity());
+        assertNotNull(quickResp.getData().getVariantAttributes());
+        assertEquals("Titanium Gray", quickResp.getData().getVariantAttributes().get("color"));
 
         // Verify Product entity relationship to Brand
         Product productEntity = productRepository.findWithDetailsById(quickResp.getData().getProductId()).orElseThrow();
@@ -424,12 +428,16 @@ class BrandModuleIntegrationTest {
                 .basePrice(new BigDecimal("1299.99"))
                 .asin("B09MSFTLAP7")
                 .variantName("Platinum")
+                .variantAttributes(Map.of("color", "Platinum", "ram", "16GB"))
                 .sellerSku("MS-SL7-PLAT")
                 .price(new BigDecimal("1299.99"))
                 .stockQuantity(50)
                 .build();
         ResponseDto<QuickCreateProductResponseDto> quickResp =
                 brandDashboardService.quickCreateProduct("satya@microsoft.com", surface);
+
+        assertNotNull(quickResp.getData().getVariantAttributes());
+        assertEquals("Platinum", quickResp.getData().getVariantAttributes().get("color"));
 
         Product product = productRepository.findWithDetailsById(quickResp.getData().getProductId()).orElseThrow();
         assertNotNull(product.getBrand());

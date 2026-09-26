@@ -12,6 +12,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -44,7 +45,7 @@ public class QuickCreateProductRequestDto {
     @Size(min = 1, max = 150, message = "Variant name must be between 1 and 150 characters")
     private String variantName;
 
-    private String variantAttributesJson;
+    private Map<String, Object> variantAttributes;
 
     @NotBlank(message = "Seller SKU is required")
     @Size(min = 1, max = 100, message = "Seller SKU must be between 1 and 100 characters")

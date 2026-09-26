@@ -29,6 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -311,7 +312,7 @@ public class BrandDashboardServiceImpl implements BrandDashboardService {
                 .product(savedProduct)
                 .asin(request.getAsin())
                 .variantName(request.getVariantName())
-                .variantAttributesJson(request.getVariantAttributesJson())
+                .variantAttributes(request.getVariantAttributes() != null ? request.getVariantAttributes() : new HashMap<>())
                 .build();
         ProductVariant savedVariant = productVariantRepository.save(variant);
 
@@ -337,6 +338,7 @@ public class BrandDashboardServiceImpl implements BrandDashboardService {
                 .variantId(savedVariant.getId())
                 .asin(savedVariant.getAsin())
                 .variantName(savedVariant.getVariantName())
+                .variantAttributes(savedVariant.getVariantAttributes())
                 .listingId(savedListing.getId())
                 .sellerSku(savedListing.getSellerSku())
                 .price(savedListing.getPrice())
@@ -620,7 +622,7 @@ public class BrandDashboardServiceImpl implements BrandDashboardService {
                         .productId(product.getId())
                         .asin(v.getAsin())
                         .variantName(v.getVariantName())
-                        .variantAttributesJson(v.getVariantAttributesJson())
+                        .variantAttributes(v.getVariantAttributes())
                         .createdAt(v.getCreatedAt())
                         .build()).toList()
                 : List.of();

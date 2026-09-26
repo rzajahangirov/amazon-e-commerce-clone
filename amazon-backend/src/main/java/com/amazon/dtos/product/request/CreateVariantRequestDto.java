@@ -8,6 +8,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.Map;
+
 /**
  * Request DTO for creating a new product variant.
  */
@@ -23,5 +25,5 @@ public class CreateVariantRequestDto implements ApiPayload {
 
     private String variantName;
 
-    private String variantAttributesJson;
+    private Map<String, Object> variantAttributes;
 }

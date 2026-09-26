@@ -18,6 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 
@@ -48,7 +49,7 @@ public class ProductVariantServiceImpl implements ProductVariantService {
                 .product(product)
                 .asin(asin)
                 .variantName(request.getVariantName())
-                .variantAttributesJson(request.getVariantAttributesJson())
+                .variantAttributes(request.getVariantAttributes() != null ? request.getVariantAttributes() : new HashMap<>())
                 .build();
 
         ProductVariant saved = productVariantRepository.save(variant);
@@ -110,7 +111,7 @@ public class ProductVariantServiceImpl implements ProductVariantService {
                 .productId(variant.getProduct() != null ? variant.getProduct().getId() : null)
                 .asin(variant.getAsin())
                 .variantName(variant.getVariantName())
-                .variantAttributesJson(variant.getVariantAttributesJson())
+                .variantAttributes(variant.getVariantAttributes())
                 .listings(listingDtos)
                 .createdAt(variant.getCreatedAt())
                 .build();

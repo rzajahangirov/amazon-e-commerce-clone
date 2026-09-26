@@ -181,7 +181,7 @@ public class ProductServiceImpl implements ProductService {
                         .productId(product.getId())
                         .asin(v.getAsin())
                         .variantName(v.getVariantName())
-                        .variantAttributesJson(v.getVariantAttributesJson())
+                        .variantAttributes(v.getVariantAttributes())
                         .createdAt(v.getCreatedAt())
                         .build()).toList()
                 : List.of();

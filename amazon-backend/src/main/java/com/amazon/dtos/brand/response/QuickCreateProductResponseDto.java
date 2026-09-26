@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -22,6 +23,7 @@ public class QuickCreateProductResponseDto {
     private UUID variantId;
     private String asin;
     private String variantName;
+    private Map<String, Object> variantAttributes;
     private UUID listingId;
     private String sellerSku;
     private BigDecimal price;

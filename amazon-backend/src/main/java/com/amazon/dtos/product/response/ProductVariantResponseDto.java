@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -23,7 +24,7 @@ public class ProductVariantResponseDto {
     private UUID productId;
     private String asin;
     private String variantName;
-    private String variantAttributesJson;
+    private Map<String, Object> variantAttributes;
     private List<ProductListingResponseDto> listings;
     private LocalDateTime createdAt;
 }

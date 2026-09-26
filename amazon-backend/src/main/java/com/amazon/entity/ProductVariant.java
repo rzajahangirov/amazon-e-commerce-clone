@@ -1,12 +1,15 @@
 package com.amazon.entity;
 
+import com.amazon.converter.JsonToMapConverter;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -44,7 +47,16 @@ public class ProductVariant extends BaseEntity {
     private String variantName;
 
     @Column(name = "variant_attributes_json", columnDefinition = "TEXT")
-    private String variantAttributesJson;
+    @Convert(converter = JsonToMapConverter.class)
+    @Builder.Default
+    private Map<String, Object> variantAttributes = new HashMap<>();
+
+    public Map<String, Object> getVariantAttributes() {
+        if (variantAttributes == null) {
+            variantAttributes = new HashMap<>();
+        }
+        return variantAttributes;
+    }
 
     @OneToMany(mappedBy = "productVariant", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
