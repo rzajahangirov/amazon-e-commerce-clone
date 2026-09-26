@@ -18,6 +18,10 @@ public interface CategoryService {
 
     ResponseDto<CategoryResponseDto> approveCategory(UUID id);
 
+    ResponseDto<CategoryResponseDto> rejectCategory(UUID id, String reason);
+
+    ResponseDto<List<CategoryResponseDto>> getPendingCategories();
+
     ResponseDto<CategoryResponseDto> getCategoryById(UUID id);
 
     ResponseDto<CategoryResponseDto> getCategoryBySlug(String slug);

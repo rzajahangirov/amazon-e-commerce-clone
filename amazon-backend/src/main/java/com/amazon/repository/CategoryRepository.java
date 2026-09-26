@@ -7,6 +7,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -33,6 +35,13 @@ public interface CategoryRepository extends JpaRepository<Category, UUID> {
     List<Category> findByParentIsNullAndIsApprovedTrue();
 
     List<Category> findByIsApproved(Boolean isApproved);
+
+    Page<Category> findByIsApprovedFalse(Pageable pageable);
+
+    List<Category> findByIsApprovedFalseAndRejectionReasonIsNull();
+
+    @Query("SELECT c.id, c.name, SUM(oi.subtotal) FROM OrderItem oi JOIN oi.order o JOIN oi.productVariant pv JOIN pv.product p JOIN p.category c WHERE o.status NOT IN (com.amazon.enums.OrderStatus.CANCELLED, com.amazon.enums.OrderStatus.REFUNDED) GROUP BY c.id, c.name ORDER BY SUM(oi.subtotal) DESC")
+    List<Object[]> findTopRevenueCategories(Pageable pageable);
 
     @EntityGraph(attributePaths = {"subCategories"})
     @Query("SELECT c FROM Category c WHERE c.parent IS NULL AND c.isApproved = true")

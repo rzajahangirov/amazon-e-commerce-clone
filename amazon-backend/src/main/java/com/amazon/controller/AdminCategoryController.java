@@ -2,6 +2,7 @@ package com.amazon.controller;
 
 import com.amazon.dtos.category.request.CreateCategoryRequestDto;
 import com.amazon.dtos.category.response.CategoryResponseDto;
+import com.amazon.dtos.admin.request.RejectCategoryRequestDto;
 import com.amazon.payloads.ResponseDto;
 import com.amazon.service.CategoryService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -46,6 +47,19 @@ public class AdminCategoryController {
     public ResponseEntity<ResponseDto<CategoryResponseDto>> approveCategoryPost(@PathVariable UUID id) {
         log.info("Admin approving category id: {}", id);
         return ResponseEntity.ok(categoryService.approveCategory(id));
+    }
+
+    @GetMapping("/pending")
+    @Operation(summary = "List pending category proposals")
+    public ResponseEntity<ResponseDto<List<CategoryResponseDto>>> getPendingCategories() {
+        return ResponseEntity.ok(categoryService.getPendingCategories());
+    }
+
+    @PostMapping("/{id}/reject")
+    @Operation(summary = "Reject a pending category proposal")
+    public ResponseEntity<ResponseDto<CategoryResponseDto>> rejectCategory(
+            @PathVariable UUID id, @Valid @RequestBody(required = false) RejectCategoryRequestDto request) {
+        return ResponseEntity.ok(categoryService.rejectCategory(id, request == null ? null : request.getReason()));
     }
 
     @PatchMapping("/{id}/approve")

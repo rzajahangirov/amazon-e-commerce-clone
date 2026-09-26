@@ -57,10 +57,32 @@ public class CategoryServiceImpl implements CategoryService {
                 .orElseThrow(() -> new ResourceNotFoundException(CatalogError.CATEGORY_NOT_FOUND.getMessage()));
 
         category.setIsApproved(true);
+        category.setRejectionReason(null);
         Category saved = categoryRepository.save(category);
         log.info("Category approved by platform admin: id={}, name={}, slug={}", saved.getId(), saved.getName(), saved.getSlug());
 
         return ApiResponse.success(mapToResponseDto(saved), "Category approved successfully");
+    }
+
+    @Override
+    @Transactional
+    public ResponseDto<CategoryResponseDto> rejectCategory(UUID id, String reason) {
+        Category category = categoryRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException(CatalogError.CATEGORY_NOT_FOUND.getMessage()));
+        if (Boolean.TRUE.equals(category.getIsApproved())) {
+            throw new BusinessRuleException("Approved categories cannot be rejected");
+        }
+        category.setRejectionReason(reason == null || reason.isBlank() ? null : reason.trim());
+        Category saved = categoryRepository.save(category);
+        return ApiResponse.success(mapToResponseDto(saved), "Category rejected successfully");
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ResponseDto<List<CategoryResponseDto>> getPendingCategories() {
+        List<CategoryResponseDto> pending = categoryRepository.findByIsApprovedFalseAndRejectionReasonIsNull()
+                .stream().map(this::mapToResponseDto).toList();
+        return ApiResponse.success(pending, "Pending categories retrieved successfully");
     }
 
     @Override
@@ -183,6 +205,7 @@ public class CategoryServiceImpl implements CategoryService {
                 .slug(category.getSlug())
                 .level(category.getLevel())
                 .isApproved(category.getIsApproved())
+                .rejectionReason(category.getRejectionReason())
                 .createdAt(category.getCreatedAt())
                 .build();
     }
@@ -202,6 +225,7 @@ public class CategoryServiceImpl implements CategoryService {
                 .slug(category.getSlug())
                 .level(category.getLevel())
                 .isApproved(category.getIsApproved())
+                .rejectionReason(category.getRejectionReason())
                 .subCategories(subDtos)
                 .createdAt(category.getCreatedAt())
                 .build();
