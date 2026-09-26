@@ -1,0 +1,18 @@
+{
+  "agent-capture": {
+    "Stop": [
+      {
+        "type": "command",
+        "command": "node capture.js",
+        "timeout": 30
+      }
+    ],
+    "PostInvocation": [
+      {
+        "type": "command",
+        "command": "node capture.js",
+        "timeout": 30
+      }
+    ]
+  }
+}
