@@ -1,0 +1,23 @@
+package com.amazon.dtos.user.response;
+
+import com.amazon.enums.RoleType;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+/**
+ * Response DTO for user information returned in API responses.
+ */
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class UserResponseDto {
+
+    private Long id;
+    private String name;
+    private String surname;
+    private String email;
+    private RoleType role;
+}

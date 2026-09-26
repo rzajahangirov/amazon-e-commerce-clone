@@ -1,0 +1,51 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: amazon-backend
+  datasource:
+    url: jdbc:postgresql://localhost:5432/amazon_db
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:12345}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+  mail:
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+
+app:
+  jwt:
+    secret: ${JWT_SECRET:amazon-clone-dev-secret-change-in-production-minimum-32-characters}
+    expiration-ms: 86400000
+  upload:
+    dir: uploads
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+
+aws:
+  s3:
+    bucket-name: ${AWS_S3_BUCKET:my-bucket}
+    region: ${AWS_REGION:eu-central-1}
+    access-key: ${AWS_ACCESS_KEY_ID:}
+    secret-key: ${AWS_SECRET_ACCESS_KEY:}
