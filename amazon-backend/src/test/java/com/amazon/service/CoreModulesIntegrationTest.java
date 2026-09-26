@@ -3,6 +3,10 @@ package com.amazon.service;
 import com.amazon.dtos.auth.request.LoginRequestDto;
 import com.amazon.dtos.auth.request.RegisterRequestDto;
 import com.amazon.dtos.auth.response.AuthResponseDto;
+import com.amazon.dtos.brand.request.CreateBrandApplicationRequestDto;
+import com.amazon.dtos.brand.request.CreateBrandCatalogProductRequestDto;
+import com.amazon.dtos.brand.response.BrandApplicationResponseDto;
+import com.amazon.dtos.brand.response.BrandResponseDto;
 import com.amazon.dtos.cart.request.AddToCartRequestDto;
 import com.amazon.dtos.cart.request.UpdateCartItemRequestDto;
 import com.amazon.dtos.cart.response.CartResponseDto;
@@ -12,14 +16,12 @@ import com.amazon.dtos.listing.request.CreateListingRequestDto;
 import com.amazon.dtos.listing.response.ProductListingResponseDto;
 import com.amazon.dtos.order.request.CheckoutRequestDto;
 import com.amazon.dtos.order.response.OrderResponseDto;
-import com.amazon.dtos.product.request.CreateProductRequestDto;
 import com.amazon.dtos.product.request.CreateVariantRequestDto;
 import com.amazon.dtos.product.response.ProductResponseDto;
 import com.amazon.dtos.product.response.ProductVariantResponseDto;
 import com.amazon.enums.FulfillmentType;
 import com.amazon.enums.ListingStatus;
 import com.amazon.enums.OrderStatus;
-import com.amazon.enums.ProductStatus;
 import com.amazon.payloads.ResponseDto;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -44,6 +46,12 @@ class CoreModulesIntegrationTest {
 
     @Autowired
     private CategoryService categoryService;
+
+    @Autowired
+    private BrandApplicationService brandApplicationService;
+
+    @Autowired
+    private BrandDashboardService brandDashboardService;
 
     @Autowired
     private ProductService productService;
@@ -85,13 +93,8 @@ class CoreModulesIntegrationTest {
     @Test
     @DisplayName("Module 2 (Catalog): Create Category, Product, Variant, and Listing")
     void testCatalogFlow() {
-        // 1. Create seller
-        RegisterRequestDto sellerRegister = RegisterRequestDto.builder()
-                .fullName("Acme Seller")
-                .email("seller@acme.com")
-                .password("SecretSeller123!")
-                .build();
-        authService.register(sellerRegister);
+        // Product templates and ASINs are created by the brand owner.
+        createApprovedBrand("Acme", "acme", "seller@acme.com");
 
         // 2. Create Category
         CreateCategoryRequestDto categoryDto = CreateCategoryRequestDto.builder()
@@ -103,15 +106,13 @@ class CoreModulesIntegrationTest {
         UUID categoryId = catResponse.getData().getId();
         assertNotNull(categoryId);
 
-        // 3. Create Product
-        CreateProductRequestDto productDto = CreateProductRequestDto.builder()
+        // 3. Create a catalog template without pricing or inventory.
+        ResponseDto<ProductResponseDto> prodResponse = brandDashboardService.createBrandProductTemplate("seller@acme.com",
+                CreateBrandCatalogProductRequestDto.builder()
                 .categoryId(categoryId)
                 .title("Echo Dot Smart Speaker")
                 .description("Smart speaker with Alexa")
-                .basePrice(new BigDecimal("49.99"))
-                .status(ProductStatus.ACTIVE)
-                .build();
-        ResponseDto<ProductResponseDto> prodResponse = productService.createProduct(productDto, "seller@acme.com");
+                .build());
         UUID productId = prodResponse.getData().getId();
         assertNotNull(productId);
 
@@ -121,7 +122,7 @@ class CoreModulesIntegrationTest {
                 .variantName("Charcoal Black")
                 .variantAttributes(Map.of("color", "Charcoal"))
                 .build();
-        ResponseDto<ProductVariantResponseDto> variantResponse = productVariantService.createVariant(productId, variantDto);
+        ResponseDto<ProductVariantResponseDto> variantResponse = brandDashboardService.createBrandProductVariant("seller@acme.com", productId, variantDto);
         UUID variantId = variantResponse.getData().getId();
         assertNotNull(variantId);
         assertEquals("B09B8V1LZ3", variantResponse.getData().getAsin());
@@ -148,11 +149,7 @@ class CoreModulesIntegrationTest {
     @DisplayName("Module 3 & 4 (Cart & Order): Add to Cart, update quantity, and Checkout into Order with stock deduction")
     void testCartAndCheckoutFlow() {
         // Setup Seller & Buyer
-        authService.register(RegisterRequestDto.builder()
-                .fullName("Store Owner")
-                .email("store@owner.com")
-                .password("Owner123!")
-                .build());
+        createApprovedBrand("Store Owner Brand", "store-owner-brand", "store@owner.com");
 
         authService.register(RegisterRequestDto.builder()
                 .fullName("Alice Buyer")
@@ -166,14 +163,13 @@ class CoreModulesIntegrationTest {
                 .slug("books")
                 .build());
 
-        ResponseDto<ProductResponseDto> prod = productService.createProduct(CreateProductRequestDto.builder()
+        ResponseDto<ProductResponseDto> prod = brandDashboardService.createBrandProductTemplate("store@owner.com",
+                CreateBrandCatalogProductRequestDto.builder()
                 .categoryId(cat.getData().getId())
                 .title("Clean Architecture Book")
-                .basePrice(new BigDecimal("29.99"))
-                .status(ProductStatus.ACTIVE)
-                .build(), "store@owner.com");
+                .build());
 
-        ResponseDto<ProductVariantResponseDto> variant = productVariantService.createVariant(prod.getData().getId(),
+        ResponseDto<ProductVariantResponseDto> variant = brandDashboardService.createBrandProductVariant("store@owner.com", prod.getData().getId(),
                 CreateVariantRequestDto.builder()
                         .asin("B079DNL1B6")
                         .variantName("Paperback")
@@ -236,5 +232,13 @@ class CoreModulesIntegrationTest {
 
         ResponseDto<ProductListingResponseDto> restoredListing = productListingService.getListingById(listingId);
         assertEquals(10, restoredListing.getData().getStockQuantity());
+    }
+
+    private BrandResponseDto createApprovedBrand(String name, String slug, String ownerEmail) {
+        var application = brandApplicationService.submitApplication(CreateBrandApplicationRequestDto.builder()
+                .applicantName(name + " Owner").applicantEmail(ownerEmail).password("OwnerPassword123!")
+                .applicantPhone("+1234567890").brandName(name).brandSlug(slug)
+                .trademarkRegistrationNumber("TM-" + slug).brandCountry("US").build());
+        return brandApplicationService.approveApplication(application.getData().getId()).getData();
     }
 }

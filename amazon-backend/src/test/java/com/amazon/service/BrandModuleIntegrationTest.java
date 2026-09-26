@@ -43,6 +43,12 @@ class BrandModuleIntegrationTest {
     private BrandDashboardService brandDashboardService;
 
     @Autowired
+    private ProductListingService productListingService;
+
+    @Autowired
+    private AuthService authService;
+
+    @Autowired
     private CategoryService categoryService;
 
     @Autowired
@@ -253,39 +259,24 @@ class BrandModuleIntegrationTest {
     }
 
     @Test
-    @DisplayName("Workflow 5: Atomic Quick-Create Product & Permissions")
-    void testQuickCreateProductAndPermissions() {
+    @DisplayName("Workflow 5: Separate Brand Catalog and Seller Offer Creation")
+    void testBrandCatalogAndOfferSeparation() {
         setupApprovedBrand("Samsung", "samsung", "lee@samsung.com");
 
-        QuickCreateProductRequestDto quickDto = QuickCreateProductRequestDto.builder()
-                .title("Galaxy S26 Ultra")
-                .description("Flagship AI smartphone")
-                .categoryId(categoryId)
-                .basePrice(new BigDecimal("1199.99"))
-                .asin("B09SAMS26U")
-                .variantName("Titanium Gray / 512GB")
-                .variantAttributes(Map.of("color", "Titanium Gray", "storage", "512GB"))
-                .sellerSku("SAM-S26U-512-GRY")
-                .price(new BigDecimal("1199.99"))
-                .stockQuantity(150)
-                .fulfillmentType(FulfillmentType.FBA)
-                .build();
-
-        ResponseDto<QuickCreateProductResponseDto> quickResp = brandDashboardService.quickCreateProduct("lee@samsung.com", quickDto);
-        assertNotNull(quickResp.getData());
-        assertNotNull(quickResp.getData().getProductId());
-        assertNotNull(quickResp.getData().getVariantId());
-        assertNotNull(quickResp.getData().getListingId());
-        assertEquals("Galaxy S26 Ultra", quickResp.getData().getProductTitle());
-        assertEquals(150, quickResp.getData().getStockQuantity());
-        assertNotNull(quickResp.getData().getVariantAttributes());
-        assertEquals("Titanium Gray", quickResp.getData().getVariantAttributes().get("color"));
+        CatalogFixture catalog = createCatalog("lee@samsung.com", "Galaxy S26 Ultra", "Flagship AI smartphone",
+                "B09SAMS26U", "Titanium Gray / 512GB", Map.of("color", "Titanium Gray", "storage", "512GB"));
+        assertNotNull(catalog.productId());
+        assertNotNull(catalog.variantId());
+        assertNull(catalog.product().getBasePrice());
+        assertEquals("Titanium Gray", catalog.variant().getVariantAttributes().get("color"));
+        var offer = createOffer(catalog.variantId(), "SAM-S26U-512-GRY", "lee@samsung.com", 150);
+        assertEquals(150, offer.getStockQuantity());
 
         // Verify Product entity relationship to Brand
-        Product productEntity = productRepository.findWithDetailsById(quickResp.getData().getProductId()).orElseThrow();
+        Product productEntity = productRepository.findWithDetailsById(catalog.productId()).orElseThrow();
         assertNotNull(productEntity.getBrand());
         assertEquals("Samsung", productEntity.getBrand().getName());
-        assertEquals(quickResp.getData().getBrandId(), productEntity.getBrand().getId());
+        assertEquals(catalog.product().getBrandId(), productEntity.getBrand().getId());
 
         // Verify product shows in getBrandProducts
         ResponseDto<PaginationPayload<ProductResponseDto>> products =
@@ -296,17 +287,16 @@ class BrandModuleIntegrationTest {
         // Update product
         UpdateBrandProductRequestDto updateProductDto = UpdateBrandProductRequestDto.builder()
                 .title("Galaxy S26 Ultra Pro")
-                .basePrice(new BigDecimal("1249.99"))
                 .build();
 
         ResponseDto<ProductResponseDto> updatedProd = brandDashboardService.updateBrandProduct(
-                "lee@samsung.com", quickResp.getData().getProductId(), updateProductDto);
+                "lee@samsung.com", catalog.productId(), updateProductDto);
         assertEquals("Galaxy S26 Ultra Pro", updatedProd.getData().getTitle());
-        assertEquals(new BigDecimal("1249.99"), updatedProd.getData().getBasePrice());
+        assertNull(updatedProd.getData().getBasePrice());
 
         // Delete product
         ResponseDto<Void> deleteResp = brandDashboardService.deleteBrandProduct(
-                "lee@samsung.com", quickResp.getData().getProductId());
+                "lee@samsung.com", catalog.productId());
         assertNotNull(deleteResp);
     }
 
@@ -318,19 +308,9 @@ class BrandModuleIntegrationTest {
         setupApprovedBrand("Panasonic Corp", "panasonic", "owner@panasonic.com");
 
         // LG Owner creates a product
-        QuickCreateProductRequestDto lgProduct = QuickCreateProductRequestDto.builder()
-                .title("LG OLED TV C5")
-                .categoryId(categoryId)
-                .basePrice(new BigDecimal("1799.99"))
-                .asin("B09LGC5OLED")
-                .variantName("65 inch")
-                .sellerSku("LG-C5-65")
-                .price(new BigDecimal("1799.99"))
-                .stockQuantity(40)
-                .build();
-        ResponseDto<QuickCreateProductResponseDto> lgCreated =
-                brandDashboardService.quickCreateProduct("owner@lg.com", lgProduct);
-        UUID lgProductId = lgCreated.getData().getProductId();
+        CatalogFixture lgCreated = createCatalog("owner@lg.com", "LG OLED TV C5", null,
+                "B09LGC5OLED", "65 inch", Map.of());
+        UUID lgProductId = lgCreated.productId();
 
         // CROSS-BRAND ATTACK: Panasonic Owner attempts to update LG's product -> MUST FAIL with AccessDeniedException
         UpdateBrandProductRequestDto attackUpdate = UpdateBrandProductRequestDto.builder()
@@ -384,17 +364,9 @@ class BrandModuleIntegrationTest {
         BrandResponseDto brand = setupApprovedBrand("Bose", "bose", "amar@bose.com");
 
         // Create product
-        QuickCreateProductRequestDto boseProduct = QuickCreateProductRequestDto.builder()
-                .title("Bose QC Ultra")
-                .categoryId(categoryId)
-                .basePrice(new BigDecimal("379.00"))
-                .asin("B09BOSEQC")
-                .variantName("Black")
-                .sellerSku("BOSE-QC-BLK")
-                .price(new BigDecimal("379.00"))
-                .stockQuantity(100)
-                .build();
-        brandDashboardService.quickCreateProduct("amar@bose.com", boseProduct);
+        CatalogFixture boseProduct = createCatalog("amar@bose.com", "Bose QC Ultra", null,
+                "B09BOSEQC", "Black", Map.of());
+        createOffer(boseProduct.variantId(), "BOSE-QC-BLK", "amar@bose.com");
 
         // Admin suspends / deletes brand
         adminBrandManagementService.deleteBrand(brand.getId());
@@ -422,24 +394,13 @@ class BrandModuleIntegrationTest {
         assertEquals(owner.getId(), brand.getOwnerUser().getId());
 
         // 3. Quick create product and verify Product -> Brand navigation
-        QuickCreateProductRequestDto surface = QuickCreateProductRequestDto.builder()
-                .title("Surface Laptop 7")
-                .categoryId(categoryId)
-                .basePrice(new BigDecimal("1299.99"))
-                .asin("B09MSFTLAP7")
-                .variantName("Platinum")
-                .variantAttributes(Map.of("color", "Platinum", "ram", "16GB"))
-                .sellerSku("MS-SL7-PLAT")
-                .price(new BigDecimal("1299.99"))
-                .stockQuantity(50)
-                .build();
-        ResponseDto<QuickCreateProductResponseDto> quickResp =
-                brandDashboardService.quickCreateProduct("satya@microsoft.com", surface);
+        CatalogFixture surface = createCatalog("satya@microsoft.com", "Surface Laptop 7", null,
+                "B09MSFTLAP7", "Platinum", Map.of("color", "Platinum", "ram", "16GB"));
 
-        assertNotNull(quickResp.getData().getVariantAttributes());
-        assertEquals("Platinum", quickResp.getData().getVariantAttributes().get("color"));
+        assertNotNull(surface.variant().getVariantAttributes());
+        assertEquals("Platinum", surface.variant().getVariantAttributes().get("color"));
 
-        Product product = productRepository.findWithDetailsById(quickResp.getData().getProductId()).orElseThrow();
+        Product product = productRepository.findWithDetailsById(surface.productId()).orElseThrow();
         assertNotNull(product.getBrand());
         assertEquals("Microsoft", product.getBrand().getName());
         assertEquals("satya@microsoft.com", product.getSeller().getEmail());
@@ -463,5 +424,65 @@ class BrandModuleIntegrationTest {
         ResponseDto<BrandApplicationResponseDto> appResp = brandApplicationService.submitApplication(appDto);
         ResponseDto<BrandResponseDto> approved = brandApplicationService.approveApplication(appResp.getData().getId());
         return approved.getData();
+    }
+
+    @Test
+    @DisplayName("Catalog creation is brand-admin-only and brand offers retain Buy Box priority")
+    void testCatalogRoleRestrictionsAndBrandBuyboxPriority() {
+        setupApprovedBrand("Priority Brand", "priority-brand", "priority-owner@example.com");
+        AddBrandMemberRequestDto sellerMember = AddBrandMemberRequestDto.builder()
+                .fullName("Brand Seller").email("brand-seller@example.com").password("StrongPassword123!")
+                .brandRole(BrandRole.BRAND_SELLER).build();
+        brandDashboardService.addBrandMember("priority-owner@example.com", sellerMember);
+        assertThrows(AccessDeniedException.class, () -> brandDashboardService.createBrandProductTemplate(
+                "brand-seller@example.com", CreateBrandCatalogProductRequestDto.builder()
+                        .title("Unauthorized Product").categoryId(categoryId).build()));
+
+        authService.registerSeller(com.amazon.dtos.auth.request.SellerRegisterRequestDto.builder()
+                .fullName("Independent Seller").email("independent-seller@example.com")
+                .password("SellerPassword123!").phone("+1234567890").storeName("Independent Store")
+                .taxNumber("TAX-1001").businessAddress("1 Market Street").build());
+
+        var product = brandDashboardService.createBrandProductTemplate("priority-owner@example.com",
+                CreateBrandCatalogProductRequestDto.builder().title("Priority Phone").categoryId(categoryId).build()).getData();
+        assertNull(product.getBasePrice());
+        assertThrows(AccessDeniedException.class, () -> brandDashboardService.createBrandProductVariant(
+                "brand-seller@example.com", product.getId(),
+                com.amazon.dtos.product.request.CreateVariantRequestDto.builder().asin("B0SELLERNOASIN").build()));
+        var variant = brandDashboardService.createBrandProductVariant("priority-owner@example.com", product.getId(),
+                com.amazon.dtos.product.request.CreateVariantRequestDto.builder().asin("B0PRIORITY01").variantName("Black").build()).getData();
+
+        var firstResellerOffer = createOffer(variant.getId(), "IND-001", "independent-seller@example.com");
+        assertTrue(firstResellerOffer.getIsBuyboxWinner());
+        var officialBrandOffer = createOffer(variant.getId(), "BRAND-001", "priority-owner@example.com");
+        assertTrue(officialBrandOffer.getIsBuyboxWinner());
+        assertFalse(productListingService.getListingById(firstResellerOffer.getId()).getData().getIsBuyboxWinner());
+        var laterResellerOffer = createOffer(variant.getId(), "IND-002", "independent-seller@example.com");
+        assertFalse(laterResellerOffer.getIsBuyboxWinner());
+        assertTrue(productListingService.getBuyboxWinner(variant.getId()).getData().getId().equals(officialBrandOffer.getId()));
+    }
+
+    private CatalogFixture createCatalog(String email, String title, String description, String asin,
+                                         String variantName, Map<String, Object> attributes) {
+        var product = brandDashboardService.createBrandProductTemplate(email,
+                CreateBrandCatalogProductRequestDto.builder().title(title).description(description)
+                        .categoryId(categoryId).build()).getData();
+        var variant = brandDashboardService.createBrandProductVariant(email, product.getId(),
+                com.amazon.dtos.product.request.CreateVariantRequestDto.builder().asin(asin)
+                        .variantName(variantName).variantAttributes(attributes).build()).getData();
+        return new CatalogFixture(product.getId(), variant.getId(), product, variant);
+    }
+
+    private record CatalogFixture(UUID productId, UUID variantId, ProductResponseDto product,
+                                  com.amazon.dtos.product.response.ProductVariantResponseDto variant) { }
+
+    private com.amazon.dtos.listing.response.ProductListingResponseDto createOffer(UUID variantId, String sku, String sellerEmail) {
+        return createOffer(variantId, sku, sellerEmail, 5);
+    }
+
+    private com.amazon.dtos.listing.response.ProductListingResponseDto createOffer(UUID variantId, String sku, String sellerEmail, int stock) {
+        return productListingService.createListing(com.amazon.dtos.listing.request.CreateListingRequestDto.builder()
+                .productVariantId(variantId).sellerSku(sku).price(new BigDecimal("100.00"))
+                .stockQuantity(stock).fulfillmentType(FulfillmentType.FBM).build(), sellerEmail).getData();
     }
 }

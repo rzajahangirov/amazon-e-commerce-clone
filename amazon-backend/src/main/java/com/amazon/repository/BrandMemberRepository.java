@@ -30,6 +30,10 @@ public interface BrandMemberRepository extends JpaRepository<BrandMember, UUID> 
     Optional<BrandMember> findByUserId(@Param("userId") UUID userId);
 
     @EntityGraph(attributePaths = {"brand", "user"})
+    @Query("SELECT bm FROM BrandMember bm WHERE bm.user.email = :email")
+    Optional<BrandMember> findFirstByUserEmail(@Param("email") String email);
+
+    @EntityGraph(attributePaths = {"brand", "user"})
     @Query("SELECT bm FROM BrandMember bm WHERE bm.user.id = :userId")
     List<BrandMember> findAllByUserId(@Param("userId") UUID userId);
 

@@ -6,6 +6,7 @@ import com.amazon.dtos.listing.response.ProductListingResponseDto;
 import com.amazon.entity.ProductListing;
 import com.amazon.entity.ProductVariant;
 import com.amazon.entity.User;
+import com.amazon.entity.Brand;
 import com.amazon.enums.FulfillmentType;
 import com.amazon.enums.ListingStatus;
 import com.amazon.exception.BusinessRuleException;
@@ -17,6 +18,7 @@ import com.amazon.payloads.ResponseDto;
 import com.amazon.repository.ProductListingRepository;
 import com.amazon.repository.ProductVariantRepository;
 import com.amazon.repository.UserRepository;
+import com.amazon.repository.SellerProfileRepository;
 import com.amazon.service.ProductListingService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -38,6 +40,7 @@ public class ProductListingServiceImpl implements ProductListingService {
     private final ProductListingRepository productListingRepository;
     private final ProductVariantRepository productVariantRepository;
     private final UserRepository userRepository;
+    private final SellerProfileRepository sellerProfileRepository;
 
     @Override
     @Transactional
@@ -45,11 +48,27 @@ public class ProductListingServiceImpl implements ProductListingService {
         User seller = userRepository.findByEmail(sellerEmail)
                 .orElseThrow(() -> new ResourceNotFoundException(AuthError.USER_NOT_FOUND.getMessage()));
 
-        ProductVariant variant = productVariantRepository.findById(request.getProductVariantId())
+        ProductVariant variant = productVariantRepository.findByIdForUpdate(request.getProductVariantId())
                 .orElseThrow(() -> new ResourceNotFoundException(CatalogError.VARIANT_NOT_FOUND.getMessage()));
 
+        if (variant.getProduct().getBrand() == null
+                || variant.getProduct().getBrand().getStatus() != com.amazon.enums.BrandStatus.ACTIVE
+                || variant.getProduct().getStatus() != com.amazon.enums.ProductStatus.ACTIVE
+                || !Boolean.TRUE.equals(variant.getProduct().getCategory().getIsApproved())) {
+            throw new BusinessRuleException("Seller offers can only be attached to an active brand catalog ASIN in an approved category");
+        }
+
         List<ProductListing> existingListings = productListingRepository.findByProductVariantId(variant.getId());
-        boolean isFirstListing = existingListings.isEmpty();
+        boolean isBrandOffer = isBrandOffer(seller, variant.getProduct().getBrand());
+        boolean hasBuyboxWinner = existingListings.stream().anyMatch(listing -> Boolean.TRUE.equals(listing.getIsBuyboxWinner()));
+        boolean isBuyboxWinner = request.getStatus() != ListingStatus.INACTIVE
+                && (isBrandOffer || !hasBuyboxWinner);
+
+        if (isBrandOffer && isBuyboxWinner) {
+            existingListings.stream().filter(listing -> Boolean.TRUE.equals(listing.getIsBuyboxWinner()))
+                    .forEach(listing -> listing.setIsBuyboxWinner(false));
+            productListingRepository.saveAll(existingListings);
+        }
 
         ProductListing listing = ProductListing.builder()
                 .productVariant(variant)
@@ -59,13 +78,22 @@ public class ProductListingServiceImpl implements ProductListingService {
                 .stockQuantity(request.getStockQuantity())
                 .fulfillmentType(request.getFulfillmentType() != null ? request.getFulfillmentType() : FulfillmentType.FBM)
                 .status(request.getStatus() != null ? request.getStatus() : ListingStatus.ACTIVE)
-                .isBuyboxWinner(isFirstListing)
+                .isBuyboxWinner(isBuyboxWinner)
                 .build();
 
         ProductListing saved = productListingRepository.save(listing);
         log.info("Product listing created successfully with id: {} by seller: {}", saved.getId(), sellerEmail);
 
         return ApiResponse.success(mapToResponseDto(saved), "Listing created successfully");
+    }
+
+    private boolean isBrandOffer(User seller, Brand brand) {
+        if (brand.getOwnerUser() != null && brand.getOwnerUser().getId().equals(seller.getId())) {
+            return true;
+        }
+        return sellerProfileRepository.findByUserId(seller.getId())
+                .map(profile -> profile.getBrand() != null && profile.getBrand().getId().equals(brand.getId()))
+                .orElse(false);
     }
 
     @Override

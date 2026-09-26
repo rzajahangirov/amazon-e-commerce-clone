@@ -6,6 +6,7 @@ import com.amazon.dtos.category.request.CreateCategoryRequestDto;
 import com.amazon.dtos.category.response.CategoryResponseDto;
 import com.amazon.dtos.product.response.ProductResponseDto;
 import com.amazon.dtos.product.response.ProductVariantResponseDto;
+import com.amazon.dtos.product.request.CreateVariantRequestDto;
 import com.amazon.entity.*;
 import com.amazon.enums.*;
 import com.amazon.exception.BusinessRuleException;
@@ -19,6 +20,7 @@ import com.amazon.payloads.ResponseDto;
 import com.amazon.repository.*;
 import com.amazon.service.BrandDashboardService;
 import com.amazon.service.CategoryService;
+import com.amazon.service.ProductVariantService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -32,7 +34,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.EnumSet;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -57,6 +58,7 @@ public class BrandDashboardServiceImpl implements BrandDashboardService {
     private final RoleRepository roleRepository;
     private final ProductRepository productRepository;
     private final ProductVariantRepository productVariantRepository;
+    private final ProductVariantService productVariantService;
     private final ProductListingRepository productListingRepository;
     private final OrderItemRepository orderItemRepository;
     private final CategoryRepository categoryRepository;
@@ -74,6 +76,12 @@ public class BrandDashboardServiceImpl implements BrandDashboardService {
     private static final Set<BrandRole> PRODUCT_DELETE_ROLES = EnumSet.of(
             BrandRole.BRAND_OWNER,
             BrandRole.BRAND_SUPER_ADMIN
+    );
+
+    private static final Set<BrandRole> CATALOG_ADMIN_ROLES = EnumSet.of(
+            BrandRole.BRAND_OWNER,
+            BrandRole.BRAND_SUPER_ADMIN,
+            BrandRole.BRAND_ADMIN
     );
 
     private static final Set<BrandRole> MARKETING_ROLES = EnumSet.of(
@@ -296,10 +304,10 @@ public class BrandDashboardServiceImpl implements BrandDashboardService {
 
     @Override
     @Transactional
-    public ResponseDto<QuickCreateProductResponseDto> quickCreateProduct(
-            String callerEmail, QuickCreateProductRequestDto request) {
+    public ResponseDto<ProductResponseDto> createBrandProductTemplate(
+            String callerEmail, CreateBrandCatalogProductRequestDto request) {
         BrandMember callerMember = resolveCallerMember(callerEmail);
-        enforcePermission(callerMember, PRODUCT_MANAGEMENT_ROLES, "Insufficient permissions to create products");
+        enforcePermission(callerMember, CATALOG_ADMIN_ROLES, "Only brand administrators can create catalog products");
 
         Category category = categoryRepository.findById(request.getCategoryId())
                 .orElseThrow(() -> new ResourceNotFoundException(CatalogError.CATEGORY_NOT_FOUND.getMessage() + ": " + request.getCategoryId()));
@@ -307,59 +315,32 @@ public class BrandDashboardServiceImpl implements BrandDashboardService {
             throw new BusinessRuleException(CatalogError.CATEGORY_NOT_APPROVED.getMessage());
         }
 
-        // 1. Create Product
         Product product = Product.builder()
                 .seller(callerMember.getUser())
                 .brand(callerMember.getBrand())
                 .category(category)
-                .title(request.getTitle())
+                .title(request.getTitle().trim())
                 .description(request.getDescription())
-                .basePrice(request.getBasePrice())
                 .status(ProductStatus.ACTIVE)
                 .build();
         Product savedProduct = productRepository.save(product);
-        callerMember.getBrand().getProducts().add(savedProduct);
+        log.info("Brand catalog product created: productId={}, brandId={}", savedProduct.getId(), callerMember.getBrand().getId());
+        return ApiResponse.success(mapToProductResponse(savedProduct), "Brand catalog product created successfully");
+    }
 
-        // 2. Create ProductVariant
-        ProductVariant variant = ProductVariant.builder()
-                .product(savedProduct)
-                .asin(request.getAsin())
-                .variantName(request.getVariantName())
-                .variantAttributes(request.getVariantAttributes() != null ? request.getVariantAttributes() : new HashMap<>())
-                .build();
-        ProductVariant savedVariant = productVariantRepository.save(variant);
-
-        // 3. Create ProductListing
-        ProductListing listing = ProductListing.builder()
-                .productVariant(savedVariant)
-                .seller(callerMember.getUser())
-                .sellerSku(request.getSellerSku())
-                .price(request.getPrice())
-                .stockQuantity(request.getStockQuantity())
-                .fulfillmentType(request.getFulfillmentType() != null ? request.getFulfillmentType() : FulfillmentType.FBM)
-                .isBuyboxWinner(true)
-                .status(ListingStatus.ACTIVE)
-                .build();
-        ProductListing savedListing = productListingRepository.save(listing);
-
-        log.info("Product quick-created atomically: productId={}, variantId={}, listingId={}, brandId={}",
-                savedProduct.getId(), savedVariant.getId(), savedListing.getId(), callerMember.getBrand().getId());
-
-        QuickCreateProductResponseDto response = QuickCreateProductResponseDto.builder()
-                .productId(savedProduct.getId())
-                .productTitle(savedProduct.getTitle())
-                .variantId(savedVariant.getId())
-                .asin(savedVariant.getAsin())
-                .variantName(savedVariant.getVariantName())
-                .variantAttributes(savedVariant.getVariantAttributes())
-                .listingId(savedListing.getId())
-                .sellerSku(savedListing.getSellerSku())
-                .price(savedListing.getPrice())
-                .stockQuantity(savedListing.getStockQuantity())
-                .brandId(callerMember.getBrand().getId())
-                .build();
-
-        return ApiResponse.success(response, "Product, variant, and listing quick-created successfully");
+    @Override
+    @Transactional
+    public ResponseDto<ProductVariantResponseDto> createBrandProductVariant(
+            String callerEmail, UUID productId, CreateVariantRequestDto request) {
+        BrandMember callerMember = resolveCallerMember(callerEmail);
+        enforcePermission(callerMember, CATALOG_ADMIN_ROLES, "Only brand administrators can register ASINs");
+        Product product = productRepository.findWithDetailsById(productId)
+                .orElseThrow(() -> new ResourceNotFoundException(CatalogError.PRODUCT_NOT_FOUND.getMessage() + productId));
+        validateBrandIsolation(product.getBrandId(), callerMember);
+        if (!Boolean.TRUE.equals(product.getCategory().getIsApproved())) {
+            throw new BusinessRuleException(CatalogError.CATEGORY_NOT_APPROVED.getMessage());
+        }
+        return productVariantService.createVariant(productId, request, callerEmail);
     }
 
     @Override
@@ -367,7 +348,7 @@ public class BrandDashboardServiceImpl implements BrandDashboardService {
     public ResponseDto<ProductResponseDto> updateBrandProduct(
             String callerEmail, UUID productId, UpdateBrandProductRequestDto request) {
         BrandMember callerMember = resolveCallerMember(callerEmail);
-        enforcePermission(callerMember, PRODUCT_MANAGEMENT_ROLES, "Insufficient permissions to update products");
+        enforcePermission(callerMember, CATALOG_ADMIN_ROLES, "Only brand administrators can update catalog products");
 
         Product product = productRepository.findWithDetailsById(productId)
                 .orElseThrow(() -> new ResourceNotFoundException(CatalogError.PRODUCT_NOT_FOUND.getMessage() + productId));
@@ -379,9 +360,6 @@ public class BrandDashboardServiceImpl implements BrandDashboardService {
         }
         if (request.getDescription() != null) {
             product.setDescription(request.getDescription());
-        }
-        if (request.getBasePrice() != null) {
-            product.setBasePrice(request.getBasePrice());
         }
         if (request.getCategoryId() != null) {
             Category category = categoryRepository.findById(request.getCategoryId())

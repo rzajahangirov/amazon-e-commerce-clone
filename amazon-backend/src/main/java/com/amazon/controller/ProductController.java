@@ -3,12 +3,8 @@ package com.amazon.controller;
 import com.amazon.dtos.listing.request.CreateListingRequestDto;
 import com.amazon.dtos.listing.request.UpdateListingStockRequestDto;
 import com.amazon.dtos.listing.response.ProductListingResponseDto;
-import com.amazon.dtos.product.request.CreateProductRequestDto;
-import com.amazon.dtos.product.request.CreateVariantRequestDto;
-import com.amazon.dtos.product.request.UpdateProductRequestDto;
 import com.amazon.dtos.product.response.ProductResponseDto;
 import com.amazon.dtos.product.response.ProductVariantResponseDto;
-import com.amazon.enums.ProductStatus;
 import com.amazon.payloads.PaginationPayload;
 import com.amazon.payloads.ResponseDto;
 import com.amazon.service.ProductListingService;
@@ -45,17 +41,6 @@ public class ProductController {
 
     // --- Product Endpoints ---
 
-    @PostMapping
-    @PreAuthorize("hasAnyRole('SELLER', 'ADMIN')")
-    @Operation(summary = "Create product", description = "Creates a master product entry in the catalog")
-    public ResponseEntity<ResponseDto<ProductResponseDto>> createProduct(
-            @Valid @RequestBody CreateProductRequestDto request,
-            Principal principal) {
-        String sellerEmail = principal.getName();
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(productService.createProduct(request, sellerEmail));
-    }
-
     @GetMapping("/{id}")
     @Operation(summary = "Get product by ID", description = "Retrieves product details with all associated variants")
     public ResponseEntity<ResponseDto<ProductResponseDto>> getProductById(@PathVariable UUID id) {
@@ -66,34 +51,12 @@ public class ProductController {
     @Operation(summary = "Get products", description = "Paginated list of products optionally filtered by category")
     public ResponseEntity<ResponseDto<PaginationPayload<ProductResponseDto>>> getProducts(
             @RequestParam(required = false) UUID categoryId,
-            @RequestParam(required = false) ProductStatus status,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
-        return ResponseEntity.ok(productService.getProducts(categoryId, status, page, size));
-    }
-
-    @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('SELLER', 'ADMIN')")
-    @Operation(summary = "Update product", description = "Updates a product's details")
-    public ResponseEntity<ResponseDto<ProductResponseDto>> updateProduct(
-            @PathVariable UUID id,
-            @Valid @RequestBody UpdateProductRequestDto request,
-            Principal principal) {
-        String sellerEmail = principal.getName();
-        return ResponseEntity.ok(productService.updateProduct(id, request, sellerEmail));
+        return ResponseEntity.ok(productService.getProducts(categoryId, page, size));
     }
 
     // --- Product Variant Endpoints ---
-
-    @PostMapping("/{id}/variants")
-    @PreAuthorize("hasAnyRole('SELLER', 'ADMIN')")
-    @Operation(summary = "Create product variant", description = "Creates a new sellable variant with ASIN under a product")
-    public ResponseEntity<ResponseDto<ProductVariantResponseDto>> createVariant(
-            @PathVariable UUID id,
-            @Valid @RequestBody CreateVariantRequestDto request) {
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(productVariantService.createVariant(id, request));
-    }
 
     @GetMapping("/{id}/variants")
     @Operation(summary = "Get variants by product ID", description = "Retrieves all variants belonging to a product")

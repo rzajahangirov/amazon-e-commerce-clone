@@ -12,6 +12,9 @@ import com.amazon.payloads.CatalogError;
 import com.amazon.payloads.ResponseDto;
 import com.amazon.repository.ProductRepository;
 import com.amazon.repository.ProductVariantRepository;
+import com.amazon.repository.BrandMemberRepository;
+import com.amazon.enums.BrandRole;
+import org.springframework.security.access.AccessDeniedException;
 import com.amazon.service.ProductVariantService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,10 +36,17 @@ public class ProductVariantServiceImpl implements ProductVariantService {
 
     private final ProductVariantRepository productVariantRepository;
     private final ProductRepository productRepository;
+    private final BrandMemberRepository brandMemberRepository;
 
     @Override
     @Transactional
-    public ResponseDto<ProductVariantResponseDto> createVariant(UUID productId, CreateVariantRequestDto request) {
+    public ResponseDto<ProductVariantResponseDto> createVariant(UUID productId, CreateVariantRequestDto request, String callerEmail) {
+        var member = brandMemberRepository.findFirstByUserEmail(callerEmail)
+                .orElseThrow(() -> new AccessDeniedException("Brand catalog administration membership is required"));
+        if (member.getBrandRole() != BrandRole.BRAND_OWNER && member.getBrandRole() != BrandRole.BRAND_SUPER_ADMIN
+                && member.getBrandRole() != BrandRole.BRAND_ADMIN) {
+            throw new AccessDeniedException("Only brand administrators can register ASINs");
+        }
         String asin = request.getAsin().toUpperCase().trim();
         if (productVariantRepository.existsByAsin(asin)) {
             throw new DuplicateResourceException(CatalogError.VARIANT_ASIN_EXISTS.getMessage());
@@ -44,6 +54,15 @@ public class ProductVariantServiceImpl implements ProductVariantService {
 
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new ResourceNotFoundException(CatalogError.PRODUCT_NOT_FOUND.getMessage()));
+
+        if (product.getBrand() == null || product.getBrand().getStatus() != com.amazon.enums.BrandStatus.ACTIVE
+                || product.getStatus() != com.amazon.enums.ProductStatus.ACTIVE
+                || !Boolean.TRUE.equals(product.getCategory().getIsApproved())) {
+            throw new com.amazon.exception.BusinessRuleException("ASINs can only be registered under active brand catalog products in approved categories");
+        }
+        if (!product.getBrand().getId().equals(member.getBrand().getId())) {
+            throw new AccessDeniedException("Product does not belong to the caller's brand");
+        }
 
         ProductVariant variant = ProductVariant.builder()
                 .product(product)
@@ -73,12 +92,26 @@ public class ProductVariantServiceImpl implements ProductVariantService {
         ProductVariant variant = productVariantRepository.findByAsin(asin.toUpperCase().trim())
                 .orElseThrow(() -> new ResourceNotFoundException(CatalogError.VARIANT_NOT_FOUND.getMessage()));
 
+        if (variant.getProduct().getBrand() == null
+                || variant.getProduct().getBrand().getStatus() != com.amazon.enums.BrandStatus.ACTIVE
+                || variant.getProduct().getStatus() != com.amazon.enums.ProductStatus.ACTIVE
+                || !Boolean.TRUE.equals(variant.getProduct().getCategory().getIsApproved())) {
+            throw new ResourceNotFoundException(CatalogError.VARIANT_NOT_FOUND.getMessage());
+        }
+
         return ApiResponse.success(mapToResponseDto(variant), "Product variant retrieved successfully");
     }
 
     @Override
     @Transactional(readOnly = true)
     public ResponseDto<List<ProductVariantResponseDto>> getVariantsByProductId(UUID productId) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new ResourceNotFoundException(CatalogError.PRODUCT_NOT_FOUND.getMessage()));
+        if (product.getBrand() == null || product.getBrand().getStatus() != com.amazon.enums.BrandStatus.ACTIVE
+                || product.getStatus() != com.amazon.enums.ProductStatus.ACTIVE
+                || !Boolean.TRUE.equals(product.getCategory().getIsApproved())) {
+            throw new ResourceNotFoundException(CatalogError.PRODUCT_NOT_FOUND.getMessage());
+        }
         List<ProductVariant> variants = productVariantRepository.findByProductId(productId);
         List<ProductVariantResponseDto> responseDtos = variants.stream()
                 .map(this::mapToResponseDto)

@@ -2,16 +2,13 @@ package com.amazon.service;
 
 import com.amazon.dtos.brand.request.AddBrandMemberRequestDto;
 import com.amazon.dtos.brand.request.CreateBrandApplicationRequestDto;
-import com.amazon.dtos.brand.request.QuickCreateProductRequestDto;
 import com.amazon.dtos.brand.response.BrandApplicationResponseDto;
 import com.amazon.dtos.brand.response.BrandResponseDto;
 import com.amazon.dtos.category.request.CreateCategoryRequestDto;
 import com.amazon.dtos.category.response.CategoryResponseDto;
-import com.amazon.dtos.product.request.CreateProductRequestDto;
 import com.amazon.dtos.product.response.ProductResponseDto;
 import com.amazon.enums.BrandRole;
 import com.amazon.enums.FulfillmentType;
-import com.amazon.enums.ProductStatus;
 import com.amazon.exception.BusinessRuleException;
 import com.amazon.exception.DuplicateResourceException;
 import com.amazon.exception.ResourceNotFoundException;
@@ -44,9 +41,6 @@ class CategoryModuleIntegrationTest {
 
     @Autowired
     private BrandApplicationService brandApplicationService;
-
-    @Autowired
-    private ProductService productService;
 
     @Test
     @DisplayName("Requirement 1: Automated SEO Slug Generation and Strict Duplicate Validations")
@@ -164,34 +158,18 @@ class CategoryModuleIntegrationTest {
         assertFalse(publicRoots.getData().stream().anyMatch(c -> c.getId().equals(pendingCatId)));
 
         // 4. Product Creation via ProductService fails because category is unapproved
-        CreateProductRequestDto prodDto = CreateProductRequestDto.builder()
-                .title("Ergo Wave K860")
-                .description("Ergonomic split keyboard")
-                .categoryId(pendingCatId)
-                .basePrice(new BigDecimal("129.99"))
-                .status(ProductStatus.ACTIVE)
-                .build();
-
         assertThrows(BusinessRuleException.class, () ->
-                productService.createProduct(prodDto, "owner@logitech.com"));
+                brandDashboardService.createBrandProductTemplate("owner@logitech.com",
+                        com.amazon.dtos.brand.request.CreateBrandCatalogProductRequestDto.builder()
+                                .title("Ergo Wave K860").description("Ergonomic split keyboard")
+                                .categoryId(pendingCatId).build()));
 
-        // 5. QuickCreate in BrandDashboard fails because category is unapproved
-        QuickCreateProductRequestDto quickDto = QuickCreateProductRequestDto.builder()
-                .title("Ergo Wave K860 Quick")
-                .description("Ergonomic split keyboard")
-                .categoryId(pendingCatId)
-                .basePrice(new BigDecimal("129.99"))
-                .asin("B08ERGOK86")
-                .variantName("Graphite")
-                .variantAttributes(Map.of("color", "Graphite"))
-                .sellerSku("LOGI-K860-GRP")
-                .price(new BigDecimal("129.99"))
-                .stockQuantity(100)
-                .fulfillmentType(FulfillmentType.FBA)
-                .build();
-
+        // 5. Brand catalog product creation fails because category is unapproved
         assertThrows(BusinessRuleException.class, () ->
-                brandDashboardService.quickCreateProduct("owner@logitech.com", quickDto));
+                brandDashboardService.createBrandProductTemplate("owner@logitech.com",
+                        com.amazon.dtos.brand.request.CreateBrandCatalogProductRequestDto.builder()
+                                .title("Ergo Wave K860 Quick").description("Ergonomic split keyboard")
+                                .categoryId(pendingCatId).build()));
     }
 
     @Test
@@ -223,24 +201,20 @@ class CategoryModuleIntegrationTest {
         assertTrue(publicView.getData().getIsApproved());
         assertEquals("haptic-gaming-chairs", publicView.getData().getSlug());
 
-        // 5. Now usable in QuickCreate product creation
-        QuickCreateProductRequestDto quickDto = QuickCreateProductRequestDto.builder()
-                .title("Razer Enki Pro HyperSense")
-                .description("All-Day comfort gaming chair with advanced haptics")
-                .categoryId(categoryId)
-                .basePrice(new BigDecimal("999.99"))
-                .asin("B09RAZERCH1")
-                .variantName("Black / Green")
-                .variantAttributes(Map.of("color", "Black/Green"))
-                .sellerSku("RAZ-ENKI-PRO")
-                .price(new BigDecimal("999.99"))
-                .stockQuantity(25)
-                .fulfillmentType(FulfillmentType.FBA)
-                .build();
-
-        var quickResp = brandDashboardService.quickCreateProduct("min@razer.com", quickDto);
-        assertNotNull(quickResp.getData());
-        assertEquals("Razer Enki Pro HyperSense", quickResp.getData().getProductTitle());
+        // 5. Create catalog template and ASIN without offer price or inventory.
+        var template = brandDashboardService.createBrandProductTemplate("min@razer.com",
+                com.amazon.dtos.brand.request.CreateBrandCatalogProductRequestDto.builder()
+                        .title("Razer Enki Pro HyperSense")
+                        .description("All-Day comfort gaming chair with advanced haptics")
+                        .categoryId(categoryId).build());
+        assertNotNull(template.getData());
+        assertEquals("Razer Enki Pro HyperSense", template.getData().getTitle());
+        assertNull(template.getData().getBasePrice());
+        var variant = brandDashboardService.createBrandProductVariant("min@razer.com", template.getData().getId(),
+                com.amazon.dtos.product.request.CreateVariantRequestDto.builder()
+                        .asin("B09RAZERCH1").variantName("Black / Green")
+                        .variantAttributes(Map.of("color", "Black/Green")).build());
+        assertEquals("B09RAZERCH1", variant.getData().getAsin());
     }
 
     // Helper method

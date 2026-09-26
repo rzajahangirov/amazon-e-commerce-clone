@@ -22,6 +22,14 @@ import java.util.UUID;
 public interface ProductRepository extends JpaRepository<Product, UUID> {
 
     @EntityGraph(attributePaths = {"category", "seller", "variants", "brand"})
+    @Query("SELECT p FROM Product p WHERE p.id = :id AND p.status = com.amazon.enums.ProductStatus.ACTIVE AND p.category.isApproved = true AND p.brand.status = com.amazon.enums.BrandStatus.ACTIVE")
+    Optional<Product> findPublishedWithDetailsById(@Param("id") UUID id);
+
+    @EntityGraph(attributePaths = {"category", "seller", "brand"})
+    @Query("SELECT p FROM Product p WHERE p.status = com.amazon.enums.ProductStatus.ACTIVE AND p.category.isApproved = true AND p.brand.status = com.amazon.enums.BrandStatus.ACTIVE AND (:categoryId IS NULL OR p.category.id = :categoryId)")
+    Page<Product> findPublished(@Param("categoryId") UUID categoryId, Pageable pageable);
+
+    @EntityGraph(attributePaths = {"category", "seller", "variants", "brand"})
     @Query("SELECT p FROM Product p WHERE p.id = :id")
     Optional<Product> findWithDetailsById(@Param("id") UUID id);
 

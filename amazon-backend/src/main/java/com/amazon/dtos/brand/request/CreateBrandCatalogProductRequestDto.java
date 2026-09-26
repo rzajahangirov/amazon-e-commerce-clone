@@ -1,32 +1,25 @@
-package com.amazon.dtos.product.request;
+package com.amazon.dtos.brand.request;
 
-import com.amazon.enums.ProductStatus;
-import com.amazon.payloads.ApiPayload;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.math.BigDecimal;
 import java.util.UUID;
 
-/**
- * Request DTO for updating an existing product definition.
- */
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
-public class UpdateProductRequestDto implements ApiPayload {
-
+public class CreateBrandCatalogProductRequestDto {
+    @NotNull(message = "Category ID is required")
     private UUID categoryId;
-    private UUID brandId;
 
+    @NotBlank(message = "Product title is required")
     @Size(min = 3, max = 255, message = "Product title must be between 3 and 255 characters")
     private String title;
 
     private String description;
-    private BigDecimal basePrice;
-    private ProductStatus status;
 }

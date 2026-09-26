@@ -2,7 +2,9 @@ package com.amazon.service;
 
 import com.amazon.dtos.brand.request.*;
 import com.amazon.dtos.brand.response.*;
+import com.amazon.dtos.product.request.CreateVariantRequestDto;
 import com.amazon.dtos.product.response.ProductResponseDto;
+import com.amazon.dtos.product.response.ProductVariantResponseDto;
 import com.amazon.payloads.PaginationPayload;
 import com.amazon.payloads.ResponseDto;
 
@@ -33,7 +35,9 @@ public interface BrandDashboardService {
     // Products & Stock Management
     ResponseDto<PaginationPayload<ProductResponseDto>> getBrandProducts(String callerEmail, int page, int size);
 
-    ResponseDto<QuickCreateProductResponseDto> quickCreateProduct(String callerEmail, QuickCreateProductRequestDto request);
+    ResponseDto<ProductResponseDto> createBrandProductTemplate(String callerEmail, CreateBrandCatalogProductRequestDto request);
+
+    ResponseDto<ProductVariantResponseDto> createBrandProductVariant(String callerEmail, UUID productId, CreateVariantRequestDto request);
 
     ResponseDto<ProductResponseDto> updateBrandProduct(String callerEmail, UUID productId, UpdateBrandProductRequestDto request);
 

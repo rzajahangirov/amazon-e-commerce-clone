@@ -5,6 +5,8 @@ import com.amazon.dtos.brand.response.*;
 import com.amazon.dtos.category.request.CreateCategoryRequestDto;
 import com.amazon.dtos.category.response.CategoryResponseDto;
 import com.amazon.dtos.product.response.ProductResponseDto;
+import com.amazon.dtos.product.request.CreateVariantRequestDto;
+import com.amazon.dtos.product.response.ProductVariantResponseDto;
 import com.amazon.payloads.PaginationPayload;
 import com.amazon.payloads.ResponseDto;
 import com.amazon.service.BrandDashboardService;
@@ -12,6 +14,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
@@ -98,16 +101,29 @@ public class BrandDashboardController {
         return ResponseEntity.ok(brandDashboardService.getBrandProducts(email, page, size));
     }
 
-    @PostMapping("/products/quick-create")
-    public ResponseEntity<ResponseDto<QuickCreateProductResponseDto>> quickCreateProduct(
+    @PostMapping("/products")
+    @PreAuthorize("@brandCatalogAuthorization.canManage(authentication.name)")
+    public ResponseEntity<ResponseDto<ProductResponseDto>> createBrandProductTemplate(
             Principal principal,
-            @Valid @RequestBody QuickCreateProductRequestDto request) {
+            @Valid @RequestBody CreateBrandCatalogProductRequestDto request) {
         String email = principal.getName();
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(brandDashboardService.quickCreateProduct(email, request));
+                .body(brandDashboardService.createBrandProductTemplate(email, request));
+    }
+
+    @PostMapping("/products/{id}/variants")
+    @PreAuthorize("@brandCatalogAuthorization.canManage(authentication.name)")
+    public ResponseEntity<ResponseDto<ProductVariantResponseDto>> createBrandProductVariant(
+            Principal principal,
+            @PathVariable UUID id,
+            @Valid @RequestBody CreateVariantRequestDto request) {
+        String email = principal.getName();
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(brandDashboardService.createBrandProductVariant(email, id, request));
     }
 
     @PutMapping("/products/{id}")
+    @PreAuthorize("@brandCatalogAuthorization.canManage(authentication.name)")
     public ResponseEntity<ResponseDto<ProductResponseDto>> updateBrandProduct(
             Principal principal,
             @PathVariable UUID id,

@@ -12,7 +12,7 @@ import java.util.UUID;
  */
 public interface ProductVariantService {
 
-    ResponseDto<ProductVariantResponseDto> createVariant(UUID productId, CreateVariantRequestDto request);
+    ResponseDto<ProductVariantResponseDto> createVariant(UUID productId, CreateVariantRequestDto request, String callerEmail);
 
     ResponseDto<ProductVariantResponseDto> getVariantById(UUID id);
 
