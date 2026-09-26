@@ -3,8 +3,10 @@ package com.amazon.controller;
 import com.amazon.dtos.listing.request.CreateListingRequestDto;
 import com.amazon.dtos.listing.request.UpdateListingStockRequestDto;
 import com.amazon.dtos.listing.response.ProductListingResponseDto;
+import com.amazon.dtos.product.request.ProductSearchRequestDto;
 import com.amazon.dtos.product.response.ProductResponseDto;
 import com.amazon.dtos.product.response.ProductVariantResponseDto;
+import com.amazon.enums.ProductSortBy;
 import com.amazon.payloads.PaginationPayload;
 import com.amazon.payloads.ResponseDto;
 import com.amazon.service.ProductListingService;
@@ -20,6 +22,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.security.Principal;
 import java.util.List;
 import java.util.UUID;
@@ -40,6 +43,36 @@ public class ProductController {
     private final ProductListingService productListingService;
 
     // --- Product Endpoints ---
+
+    @GetMapping("/search")
+    @Operation(summary = "Search and discover products", description = "Amazon-style dynamic multi-criteria search engine supporting keyword, category hierarchy, brand, price, rating, and sorting")
+    public ResponseEntity<ResponseDto<PaginationPayload<ProductResponseDto>>> searchProducts(
+            @RequestParam(required = false) String query,
+            @RequestParam(required = false) UUID categoryId,
+            @RequestParam(required = false) String categorySlug,
+            @RequestParam(required = false) UUID brandId,
+            @RequestParam(required = false) BigDecimal minPrice,
+            @RequestParam(required = false) BigDecimal maxPrice,
+            @RequestParam(required = false) Double minRating,
+            @RequestParam(defaultValue = "FEATURED") ProductSortBy sortBy,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            Principal principal) {
+        String email = principal != null ? principal.getName() : null;
+        ProductSearchRequestDto request = ProductSearchRequestDto.builder()
+                .query(query)
+                .categoryId(categoryId)
+                .categorySlug(categorySlug)
+                .brandId(brandId)
+                .minPrice(minPrice)
+                .maxPrice(maxPrice)
+                .minRating(minRating)
+                .sortBy(sortBy)
+                .page(page)
+                .size(size)
+                .build();
+        return ResponseEntity.ok(productService.searchProducts(request, email));
+    }
 
     @GetMapping("/{id}")
     @Operation(summary = "Get product by ID", description = "Retrieves product details with all associated variants and favorite status")

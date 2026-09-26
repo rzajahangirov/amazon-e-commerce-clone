@@ -28,5 +28,11 @@ public class ProductSummaryResponseDto {
     @Builder.Default
     private Integer totalReviews = 0;
     @Builder.Default
+    private Long totalUnitsSold = 0L;
+    @Builder.Default
+    private Long viewCount = 0L;
+    private BigDecimal buyBoxPrice;
+    private String mainImageUrl;
+    @Builder.Default
     private Boolean isFavorited = false;
 }

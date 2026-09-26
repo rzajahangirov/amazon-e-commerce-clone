@@ -22,4 +22,10 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, UUID> {
 
     @org.springframework.data.jpa.repository.Query("SELECT oi FROM OrderItem oi WHERE oi.seller.id = :sellerId")
     List<OrderItem> findBySellerUserId(@org.springframework.data.repository.query.Param("sellerId") UUID sellerId);
+
+    @org.springframework.data.jpa.repository.Query("SELECT COALESCE(SUM(oi.quantity), 0L) FROM OrderItem oi WHERE oi.productVariant.product.id = :productId AND oi.itemStatus = com.amazon.enums.OrderItemStatus.DELIVERED")
+    Long countDeliveredUnitsSoldByProductId(@org.springframework.data.repository.query.Param("productId") UUID productId);
+
+    @org.springframework.data.jpa.repository.Query("SELECT oi.productVariant.product.id, COALESCE(SUM(oi.quantity), 0L) FROM OrderItem oi WHERE oi.productVariant.product.id IN :productIds AND oi.itemStatus = com.amazon.enums.OrderItemStatus.DELIVERED GROUP BY oi.productVariant.product.id")
+    List<Object[]> countDeliveredUnitsSoldByProductIds(@org.springframework.data.repository.query.Param("productIds") java.util.Collection<UUID> productIds);
 }

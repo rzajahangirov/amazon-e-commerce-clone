@@ -1,5 +1,6 @@
 package com.amazon.service;
 
+import com.amazon.dtos.product.request.ProductSearchRequestDto;
 import com.amazon.dtos.product.response.ProductResponseDto;
 import com.amazon.payloads.PaginationPayload;
 import com.amazon.payloads.ResponseDto;
@@ -7,7 +8,7 @@ import com.amazon.payloads.ResponseDto;
 import java.util.UUID;
 
 /**
- * Service interface for Product aggregate operations.
+ * Service interface for Product aggregate, search, and discovery operations.
  */
 public interface ProductService {
 
@@ -18,4 +19,6 @@ public interface ProductService {
     ResponseDto<PaginationPayload<ProductResponseDto>> getProducts(UUID categoryId, int page, int size);
 
     ResponseDto<PaginationPayload<ProductResponseDto>> getProducts(UUID categoryId, int page, int size, String userEmail);
+
+    ResponseDto<PaginationPayload<ProductResponseDto>> searchProducts(ProductSearchRequestDto request, String userEmail);
 }

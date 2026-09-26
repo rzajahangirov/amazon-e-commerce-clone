@@ -34,6 +34,8 @@ public interface CategoryRepository extends JpaRepository<Category, UUID> {
 
     List<Category> findByParentIsNullAndIsApprovedTrue();
 
+    List<Category> findByParentIdAndIsApprovedTrue(UUID parentId);
+
     List<Category> findByIsApproved(Boolean isApproved);
 
     Page<Category> findByIsApprovedFalse(Pageable pageable);

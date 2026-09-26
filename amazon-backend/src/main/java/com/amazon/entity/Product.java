@@ -67,6 +67,17 @@ public class Product extends BaseEntity {
     @Builder.Default
     private List<ProductVariant> variants = new ArrayList<>();
 
+    @Column(name = "main_image_url")
+    private String mainImageUrl;
+
+    @Column(name = "view_count", nullable = false)
+    @Builder.Default
+    private Long viewCount = 0L;
+
+    @Column(name = "total_units_sold", nullable = false)
+    @Builder.Default
+    private Long totalUnitsSold = 0L;
+
     @Column(name = "average_rating")
     @Builder.Default
     private Double averageRating = 0.0;
@@ -74,6 +85,14 @@ public class Product extends BaseEntity {
     @Column(name = "total_reviews")
     @Builder.Default
     private Integer totalReviews = 0;
+
+    public Long getViewCount() {
+        return viewCount != null ? viewCount : 0L;
+    }
+
+    public Long getTotalUnitsSold() {
+        return totalUnitsSold != null ? totalUnitsSold : 0L;
+    }
 
     public Double getAverageRating() {
         return averageRating != null ? averageRating : 0.0;
