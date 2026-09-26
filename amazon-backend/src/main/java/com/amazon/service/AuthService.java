@@ -12,5 +12,7 @@ public interface AuthService {
 
     ResponseDto<AuthResponseDto> register(RegisterRequestDto request);
 
+    ResponseDto<AuthResponseDto> registerSeller(com.amazon.dtos.auth.request.SellerRegisterRequestDto request);
+
     ResponseDto<AuthResponseDto> login(LoginRequestDto request);
 }

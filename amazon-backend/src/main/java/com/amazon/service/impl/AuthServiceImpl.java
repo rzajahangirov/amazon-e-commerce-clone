@@ -27,6 +27,11 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.amazon.dtos.auth.request.SellerRegisterRequestDto;
+import com.amazon.entity.SellerProfile;
+import com.amazon.payloads.SellerError;
+import com.amazon.repository.SellerProfileRepository;
+
 /**
  * Implementation of {@link AuthService} handling user registration and login.
  * Adheres to Senior Developer Guidelines Section 6, 8, 9, 10.
@@ -38,10 +43,12 @@ public class AuthServiceImpl implements AuthService {
 
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
+    private final SellerProfileRepository sellerProfileRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
 
     private static final String DEFAULT_ROLE = "ROLE_CUSTOMER";
+    private static final String SELLER_ROLE = "ROLE_SELLER";
 
     @Override
     @Transactional
@@ -79,6 +86,70 @@ public class AuthServiceImpl implements AuthService {
                 .build();
 
         return ApiResponse.success(authResponse, "Registration successful");
+    }
+
+    @Override
+    @Transactional
+    public ResponseDto<AuthResponseDto> registerSeller(SellerRegisterRequestDto request) {
+        String email = request.getEmail().toLowerCase().trim();
+        if (userRepository.existsByEmail(email)) {
+            throw new DuplicateResourceException(AuthError.EMAIL_ALREADY_EXISTS.getMessage());
+        }
+
+        String storeName = request.getStoreName().trim();
+        if (sellerProfileRepository.existsByStoreName(storeName)) {
+            throw new DuplicateResourceException(SellerError.STORE_NAME_ALREADY_EXISTS.getMessage());
+        }
+
+        Role sellerRole = roleRepository.findByName(SELLER_ROLE)
+                .orElseGet(() -> roleRepository.save(Role.builder()
+                        .name(SELLER_ROLE)
+                        .description("Seller role for inventory management")
+                        .build()));
+
+        Role customerRole = roleRepository.findByName(DEFAULT_ROLE)
+                .orElseGet(() -> roleRepository.save(Role.builder()
+                        .name(DEFAULT_ROLE)
+                        .description("Default customer role")
+                        .build()));
+
+        Set<Role> roles = new HashSet<>();
+        roles.add(sellerRole);
+        roles.add(customerRole);
+
+        User user = User.builder()
+                .fullName(request.getFullName().trim())
+                .email(email)
+                .phone(request.getPhone() != null ? request.getPhone().trim() : null)
+                .passwordHash(passwordEncoder.encode(request.getPassword()))
+                .status(UserStatus.ACTIVE)
+                .roles(roles)
+                .build();
+
+        User savedUser = userRepository.save(user);
+
+        SellerProfile sellerProfile = SellerProfile.builder()
+                .user(savedUser)
+                .storeName(storeName)
+                .taxNumber(request.getTaxNumber().trim())
+                .businessAddress(request.getBusinessAddress().trim())
+                .bankAccountDetails(request.getBankAccountDetails() != null ? request.getBankAccountDetails().trim() : null)
+                .isVerified(true)
+                .build();
+
+        SellerProfile savedProfile = sellerProfileRepository.save(sellerProfile);
+        savedUser.setSellerProfile(savedProfile);
+
+        log.info("New standalone 3P seller registered successfully with email: {}, store: {}", email, storeName);
+
+        String token = jwtService.generateToken(savedUser.getEmail());
+
+        AuthResponseDto authResponse = AuthResponseDto.builder()
+                .token(token)
+                .user(mapToUserResponseDto(savedUser))
+                .build();
+
+        return ApiResponse.success(authResponse, "Seller registration successful");
     }
 
     @Override

@@ -27,4 +27,8 @@ public interface SellerProfileRepository extends JpaRepository<SellerProfile, UU
     @EntityGraph(attributePaths = {"user", "brand"})
     @Query("SELECT sp FROM SellerProfile sp WHERE sp.brand.id = :brandId")
     Optional<SellerProfile> findByBrandId(@Param("brandId") UUID brandId);
+
+    boolean existsByStoreName(String storeName);
+
+    Optional<SellerProfile> findByStoreName(String storeName);
 }

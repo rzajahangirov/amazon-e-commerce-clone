@@ -51,4 +51,7 @@ public interface BrandDashboardService {
     // Category Taxonomy Proposals (BRAND_OWNER & BRAND_SUPER_ADMIN only)
     ResponseDto<com.amazon.dtos.category.response.CategoryResponseDto> proposeCategory(
             String callerEmail, com.amazon.dtos.category.request.CreateCategoryRequestDto request);
+
+    // Brand Analytics & Statistics
+    ResponseDto<BrandAnalyticsResponseDto> getBrandAnalytics(String callerEmail);
 }

@@ -175,4 +175,15 @@ public class BrandDashboardController {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(brandDashboardService.proposeCategory(email, request));
     }
+
+    // ==========================================
+    // Brand Analytics & Statistics
+    // ==========================================
+
+    @GetMapping("/analytics")
+    public ResponseEntity<ResponseDto<BrandAnalyticsResponseDto>> getBrandAnalytics(Principal principal) {
+        String email = principal.getName();
+        return ResponseEntity.ok(brandDashboardService.getBrandAnalytics(email));
+    }
 }
+

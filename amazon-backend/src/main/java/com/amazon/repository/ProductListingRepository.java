@@ -1,6 +1,8 @@
 package com.amazon.repository;
 
 import com.amazon.entity.ProductListing;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -24,9 +26,13 @@ public interface ProductListingRepository extends JpaRepository<ProductListing, 
     List<ProductListing> findBySellerId(UUID sellerId);
 
     @EntityGraph(attributePaths = {"productVariant", "productVariant.product", "seller"})
+    Page<ProductListing> findBySellerId(UUID sellerId, Pageable pageable);
+
+    @EntityGraph(attributePaths = {"productVariant", "productVariant.product", "seller"})
     @Query("SELECT pl FROM ProductListing pl WHERE pl.id = :id")
     Optional<ProductListing> findWithDetailsById(@Param("id") UUID id);
 
     @Query("SELECT pl FROM ProductListing pl WHERE pl.productVariant.product.brand.id = :brandId")
     List<ProductListing> findByBrandId(@Param("brandId") UUID brandId);
 }
+

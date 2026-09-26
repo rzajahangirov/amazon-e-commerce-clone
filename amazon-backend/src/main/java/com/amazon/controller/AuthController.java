@@ -2,6 +2,7 @@ package com.amazon.controller;
 
 import com.amazon.dtos.auth.request.LoginRequestDto;
 import com.amazon.dtos.auth.request.RegisterRequestDto;
+import com.amazon.dtos.auth.request.SellerRegisterRequestDto;
 import com.amazon.dtos.auth.response.AuthResponseDto;
 import com.amazon.payloads.ResponseDto;
 import com.amazon.service.AuthService;
@@ -32,6 +33,14 @@ public class AuthController {
             @Valid @RequestBody RegisterRequestDto request) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(authService.register(request));
+    }
+
+    @PostMapping("/seller/register")
+    @Operation(summary = "Register a new 3P seller", description = "Atomically registers a seller account with SellerProfile and returns a JWT token")
+    public ResponseEntity<ResponseDto<AuthResponseDto>> registerSeller(
+            @Valid @RequestBody SellerRegisterRequestDto request) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(authService.registerSeller(request));
     }
 
     @PostMapping("/login")

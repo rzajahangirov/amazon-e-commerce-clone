@@ -58,6 +58,7 @@ public class BrandDashboardServiceImpl implements BrandDashboardService {
     private final ProductRepository productRepository;
     private final ProductVariantRepository productVariantRepository;
     private final ProductListingRepository productListingRepository;
+    private final OrderItemRepository orderItemRepository;
     private final CategoryRepository categoryRepository;
     private final CategoryService categoryService;
     private final PasswordEncoder passwordEncoder;
@@ -527,6 +528,88 @@ public class BrandDashboardServiceImpl implements BrandDashboardService {
                 "Only BRAND_OWNER or BRAND_SUPER_ADMIN can propose categories");
 
         return categoryService.createBrandCategory(request);
+    }
+
+    // ==========================================
+    // Brand Analytics & Statistics
+    // ==========================================
+
+    @Override
+    @Transactional(readOnly = true)
+    public ResponseDto<BrandAnalyticsResponseDto> getBrandAnalytics(String callerEmail) {
+        BrandMember callerMember = resolveCallerMember(callerEmail);
+        UUID brandId = callerMember.getBrand().getId();
+
+        // Core metrics
+        List<Product> brandProducts = productRepository.findByBrandId(brandId);
+        long totalProducts = brandProducts.size();
+
+        long totalVariants = brandProducts.stream()
+                .filter(p -> p.getVariants() != null)
+                .mapToLong(p -> p.getVariants().size())
+                .sum();
+
+        List<ProductListing> brandListings = productListingRepository.findByBrandId(brandId);
+        long totalActiveListings = brandListings.stream()
+                .filter(l -> l.getStatus() == com.amazon.enums.ListingStatus.ACTIVE)
+                .count();
+
+        long totalTeamMembers = brandMemberRepository.findByBrandId(brandId).size();
+        long totalBrandPosts = brandPostRepository.findByBrandId(brandId,
+                PageRequest.of(0, 1)).getTotalElements();
+
+        // Revenue & units from DELIVERED order items scoped to this brand
+        List<OrderItem> brandOrderItems = orderItemRepository.findByBrandId(brandId);
+        List<OrderItem> deliveredItems = brandOrderItems.stream()
+                .filter(oi -> oi.getItemStatus() == com.amazon.enums.OrderItemStatus.DELIVERED)
+                .toList();
+
+        java.math.BigDecimal totalRevenue = deliveredItems.stream()
+                .map(OrderItem::getSubtotal)
+                .reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add);
+
+        long totalUnitsSold = deliveredItems.stream()
+                .mapToLong(OrderItem::getQuantity)
+                .sum();
+
+        // Top selling products (by units sold)
+        java.util.Map<UUID, List<OrderItem>> groupedByProduct = deliveredItems.stream()
+                .collect(java.util.stream.Collectors.groupingBy(oi -> oi.getProductVariant().getProduct().getId()));
+
+        List<BrandAnalyticsResponseDto.TopSellingProductDto> topSellingProducts = groupedByProduct.entrySet().stream()
+                .map(entry -> {
+                    List<OrderItem> items = entry.getValue();
+                    long units = items.stream().mapToLong(OrderItem::getQuantity).sum();
+                    java.math.BigDecimal revenue = items.stream()
+                            .map(OrderItem::getSubtotal)
+                            .reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add);
+                    String productTitle = items.get(0).getProductVariant().getProduct().getTitle();
+                    String asin = items.get(0).getProductVariant().getAsin();
+                    return BrandAnalyticsResponseDto.TopSellingProductDto.builder()
+                            .productTitle(productTitle)
+                            .asin(asin)
+                            .totalUnitsSold(units)
+                            .totalRevenue(revenue)
+                            .build();
+                })
+                .sorted(java.util.Comparator.comparing(BrandAnalyticsResponseDto.TopSellingProductDto::getTotalUnitsSold).reversed())
+                .limit(10)
+                .toList();
+
+        BrandAnalyticsResponseDto analytics = BrandAnalyticsResponseDto.builder()
+                .totalBrandProducts(totalProducts)
+                .totalBrandVariants(totalVariants)
+                .totalActiveListings(totalActiveListings)
+                .totalTeamMembers(totalTeamMembers)
+                .totalBrandPosts(totalBrandPosts)
+                .totalBrandRevenue(totalRevenue)
+                .totalUnitsSold(totalUnitsSold)
+                .topSellingProducts(topSellingProducts)
+                .build();
+
+        log.info("Brand analytics retrieved: brandId={}", brandId);
+
+        return ApiResponse.success(analytics, "Brand analytics retrieved successfully");
     }
 
     // ==========================================
