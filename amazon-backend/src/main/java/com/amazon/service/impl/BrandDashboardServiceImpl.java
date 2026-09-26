@@ -2,6 +2,8 @@ package com.amazon.service.impl;
 
 import com.amazon.dtos.brand.request.*;
 import com.amazon.dtos.brand.response.*;
+import com.amazon.dtos.category.request.CreateCategoryRequestDto;
+import com.amazon.dtos.category.response.CategoryResponseDto;
 import com.amazon.dtos.product.response.ProductResponseDto;
 import com.amazon.dtos.product.response.ProductVariantResponseDto;
 import com.amazon.entity.*;
@@ -16,6 +18,7 @@ import com.amazon.payloads.PaginationPayload;
 import com.amazon.payloads.ResponseDto;
 import com.amazon.repository.*;
 import com.amazon.service.BrandDashboardService;
+import com.amazon.service.CategoryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -56,6 +59,7 @@ public class BrandDashboardServiceImpl implements BrandDashboardService {
     private final ProductVariantRepository productVariantRepository;
     private final ProductListingRepository productListingRepository;
     private final CategoryRepository categoryRepository;
+    private final CategoryService categoryService;
     private final PasswordEncoder passwordEncoder;
 
     // Allowed role sets
@@ -82,6 +86,11 @@ public class BrandDashboardServiceImpl implements BrandDashboardService {
             BrandRole.BRAND_OWNER,
             BrandRole.BRAND_SUPER_ADMIN,
             BrandRole.BRAND_ADMIN
+    );
+
+    private static final Set<BrandRole> CATEGORY_PROPOSAL_ROLES = EnumSet.of(
+            BrandRole.BRAND_OWNER,
+            BrandRole.BRAND_SUPER_ADMIN
     );
 
     // ==========================================
@@ -292,7 +301,10 @@ public class BrandDashboardServiceImpl implements BrandDashboardService {
         enforcePermission(callerMember, PRODUCT_MANAGEMENT_ROLES, "Insufficient permissions to create products");
 
         Category category = categoryRepository.findById(request.getCategoryId())
-                .orElseThrow(() -> new ResourceNotFoundException(CatalogError.CATEGORY_NOT_FOUND.getMessage() + request.getCategoryId()));
+                .orElseThrow(() -> new ResourceNotFoundException(CatalogError.CATEGORY_NOT_FOUND.getMessage() + ": " + request.getCategoryId()));
+        if (!Boolean.TRUE.equals(category.getIsApproved())) {
+            throw new BusinessRuleException(CatalogError.CATEGORY_NOT_APPROVED.getMessage());
+        }
 
         // 1. Create Product
         Product product = Product.builder()
@@ -372,7 +384,10 @@ public class BrandDashboardServiceImpl implements BrandDashboardService {
         }
         if (request.getCategoryId() != null) {
             Category category = categoryRepository.findById(request.getCategoryId())
-                    .orElseThrow(() -> new ResourceNotFoundException(CatalogError.CATEGORY_NOT_FOUND.getMessage() + request.getCategoryId()));
+                    .orElseThrow(() -> new ResourceNotFoundException(CatalogError.CATEGORY_NOT_FOUND.getMessage() + ": " + request.getCategoryId()));
+            if (!Boolean.TRUE.equals(category.getIsApproved())) {
+                throw new BusinessRuleException(CatalogError.CATEGORY_NOT_APPROVED.getMessage());
+            }
             product.setCategory(category);
         }
 
@@ -502,6 +517,16 @@ public class BrandDashboardServiceImpl implements BrandDashboardService {
         log.info("Brand post deleted: postId={}, brandId={}", postId, callerMember.getBrand().getId());
 
         return ApiResponse.success(null, "Brand post deleted successfully");
+    }
+
+    @Override
+    @Transactional
+    public ResponseDto<CategoryResponseDto> proposeCategory(String callerEmail, CreateCategoryRequestDto request) {
+        BrandMember callerMember = resolveCallerMember(callerEmail);
+        enforcePermission(callerMember, CATEGORY_PROPOSAL_ROLES,
+                "Only BRAND_OWNER or BRAND_SUPER_ADMIN can propose categories");
+
+        return categoryService.createBrandCategory(request);
     }
 
     // ==========================================

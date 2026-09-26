@@ -22,22 +22,13 @@ import java.util.UUID;
  * Strictly adheres to Senior Backend Developer Guidelines.
  */
 @RestController
-@RequestMapping("v1/api/categories")
+@RequestMapping("/v1/api/categories")
 @RequiredArgsConstructor
-@Tag(name = "Categories", description = "Product category taxonomy management")
+@Tag(name = "Categories", description = "Public product category taxonomy endpoints (approved only)")
 @Slf4j
 public class CategoryController {
 
     private final CategoryService categoryService;
-
-    @PostMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'SELLER')")
-    @Operation(summary = "Create category", description = "Creates a new category in the catalog taxonomy")
-    public ResponseEntity<ResponseDto<CategoryResponseDto>> createCategory(
-            @Valid @RequestBody CreateCategoryRequestDto request) {
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(categoryService.createCategory(request));
-    }
 
     @GetMapping("/{id}")
     @Operation(summary = "Get category by ID", description = "Retrieves category information by UUID")

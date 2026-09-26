@@ -17,7 +17,9 @@ import java.util.UUID;
 @Entity
 @Table(name = "categories", indexes = {
     @Index(name = "idx_category_slug", columnList = "slug", unique = true),
-    @Index(name = "idx_category_parent_id", columnList = "parent_id")
+    @Index(name = "idx_category_name", columnList = "name", unique = true),
+    @Index(name = "idx_category_parent_id", columnList = "parent_id"),
+    @Index(name = "idx_category_is_approved", columnList = "is_approved")
 })
 @SQLDelete(sql = "UPDATE categories SET deleted_at = CURRENT_TIMESTAMP WHERE id = ?")
 @SQLRestriction("deleted_at IS NULL")
@@ -41,7 +43,7 @@ public class Category extends BaseEntity {
     @Builder.Default
     private List<Category> subCategories = new ArrayList<>();
 
-    @Column(nullable = false, length = 150)
+    @Column(nullable = false, unique = true, length = 150)
     private String name;
 
     @Column(nullable = false, unique = true, length = 150)
@@ -50,6 +52,10 @@ public class Category extends BaseEntity {
     @Column(nullable = false)
     @Builder.Default
     private Integer level = 0;
+
+    @Column(name = "is_approved", nullable = false)
+    @Builder.Default
+    private Boolean isApproved = true;
 
     @OneToMany(mappedBy = "category")
     @Builder.Default

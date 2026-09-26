@@ -20,7 +20,23 @@ public interface CategoryRepository extends JpaRepository<Category, UUID> {
 
     boolean existsBySlug(String slug);
 
+    boolean existsByNameIgnoreCase(String name);
+
+    Optional<Category> findByNameIgnoreCase(String name);
+
+    Optional<Category> findByIdAndIsApprovedTrue(UUID id);
+
+    Optional<Category> findBySlugAndIsApprovedTrue(String slug);
+
     List<Category> findByParentIsNull();
+
+    List<Category> findByParentIsNullAndIsApprovedTrue();
+
+    List<Category> findByIsApproved(Boolean isApproved);
+
+    @EntityGraph(attributePaths = {"subCategories"})
+    @Query("SELECT c FROM Category c WHERE c.parent IS NULL AND c.isApproved = true")
+    List<Category> findApprovedRootCategoriesWithChildren();
 
     @EntityGraph(attributePaths = {"subCategories"})
     @Query("SELECT c FROM Category c WHERE c.parent IS NULL")

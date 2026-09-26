@@ -2,6 +2,8 @@ package com.amazon.controller;
 
 import com.amazon.dtos.brand.request.*;
 import com.amazon.dtos.brand.response.*;
+import com.amazon.dtos.category.request.CreateCategoryRequestDto;
+import com.amazon.dtos.category.response.CategoryResponseDto;
 import com.amazon.dtos.product.response.ProductResponseDto;
 import com.amazon.payloads.PaginationPayload;
 import com.amazon.payloads.ResponseDto;
@@ -159,5 +161,18 @@ public class BrandDashboardController {
             @PathVariable UUID id) {
         String email = principal.getName();
         return ResponseEntity.ok(brandDashboardService.deleteBrandPost(email, id));
+    }
+
+    // ==========================================
+    // Category Taxonomy Proposals
+    // ==========================================
+
+    @PostMapping("/categories")
+    public ResponseEntity<ResponseDto<CategoryResponseDto>> proposeCategory(
+            Principal principal,
+            @Valid @RequestBody CreateCategoryRequestDto request) {
+        String email = principal.getName();
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(brandDashboardService.proposeCategory(email, request));
     }
 }

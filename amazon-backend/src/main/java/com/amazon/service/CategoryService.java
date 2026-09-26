@@ -14,9 +14,17 @@ public interface CategoryService {
 
     ResponseDto<CategoryResponseDto> createCategory(CreateCategoryRequestDto request);
 
+    ResponseDto<CategoryResponseDto> createBrandCategory(CreateCategoryRequestDto request);
+
+    ResponseDto<CategoryResponseDto> approveCategory(UUID id);
+
     ResponseDto<CategoryResponseDto> getCategoryById(UUID id);
 
     ResponseDto<CategoryResponseDto> getCategoryBySlug(String slug);
 
     ResponseDto<List<CategoryResponseDto>> getAllRootCategories();
+
+    ResponseDto<List<CategoryResponseDto>> getAllCategoriesForAdmin(Boolean isApproved);
+
+    ResponseDto<CategoryResponseDto> getCategoryByIdForAdmin(UUID id);
 }

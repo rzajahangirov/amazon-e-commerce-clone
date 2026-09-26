@@ -12,7 +12,9 @@ import lombok.RequiredArgsConstructor;
 public enum CatalogError {
 
     CATEGORY_NOT_FOUND("Category not found with given identifier"),
+    CATEGORY_NAME_EXISTS("Category with this name already exists"),
     CATEGORY_SLUG_EXISTS("Category with this slug already exists"),
+    CATEGORY_NOT_APPROVED("Category is pending approval and cannot be used"),
     PARENT_CATEGORY_NOT_FOUND("Parent category not found"),
     PRODUCT_NOT_FOUND("Product not found with given identifier"),
     VARIANT_NOT_FOUND("Product variant not found with given identifier"),

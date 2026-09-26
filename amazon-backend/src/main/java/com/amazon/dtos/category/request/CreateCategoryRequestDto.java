@@ -25,8 +25,7 @@ public class CreateCategoryRequestDto implements ApiPayload {
     @Size(min = 2, max = 150, message = "Category name must be between 2 and 150 characters")
     private String name;
 
-    @NotBlank(message = "Category slug is required")
-    @Size(min = 2, max = 150, message = "Category slug must be between 2 and 150 characters")
+    @Size(max = 150, message = "Category slug cannot exceed 150 characters")
     private String slug;
 
     private Integer level;

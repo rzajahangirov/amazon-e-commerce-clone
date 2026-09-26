@@ -47,4 +47,8 @@ public interface BrandDashboardService {
     ResponseDto<BrandPostResponseDto> updateBrandPost(String callerEmail, UUID postId, UpdateBrandPostRequestDto request);
 
     ResponseDto<Void> deleteBrandPost(String callerEmail, UUID postId);
+
+    // Category Taxonomy Proposals (BRAND_OWNER & BRAND_SUPER_ADMIN only)
+    ResponseDto<com.amazon.dtos.category.response.CategoryResponseDto> proposeCategory(
+            String callerEmail, com.amazon.dtos.category.request.CreateCategoryRequestDto request);
 }

@@ -23,6 +23,7 @@ public class CategoryResponseDto {
     private String name;
     private String slug;
     private Integer level;
+    private Boolean isApproved;
     private List<CategoryResponseDto> subCategories;
     private LocalDateTime createdAt;
 }

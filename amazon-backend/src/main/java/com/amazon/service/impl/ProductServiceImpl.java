@@ -54,6 +54,9 @@ public class ProductServiceImpl implements ProductService {
 
         Category category = categoryRepository.findById(request.getCategoryId())
                 .orElseThrow(() -> new ResourceNotFoundException(CatalogError.CATEGORY_NOT_FOUND.getMessage()));
+        if (!Boolean.TRUE.equals(category.getIsApproved())) {
+            throw new BusinessRuleException(CatalogError.CATEGORY_NOT_APPROVED.getMessage());
+        }
 
         Brand brand = null;
         if (request.getBrandId() != null) {
@@ -152,6 +155,9 @@ public class ProductServiceImpl implements ProductService {
         if (request.getCategoryId() != null) {
             Category category = categoryRepository.findById(request.getCategoryId())
                     .orElseThrow(() -> new ResourceNotFoundException(CatalogError.CATEGORY_NOT_FOUND.getMessage()));
+            if (!Boolean.TRUE.equals(category.getIsApproved())) {
+                throw new BusinessRuleException(CatalogError.CATEGORY_NOT_APPROVED.getMessage());
+            }
             product.setCategory(category);
         }
 
