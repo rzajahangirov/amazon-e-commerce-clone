@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -20,13 +21,24 @@ import java.util.UUID;
 @Repository
 public interface ProductRepository extends JpaRepository<Product, UUID> {
 
-    @EntityGraph(attributePaths = {"category", "seller", "variants"})
+    @EntityGraph(attributePaths = {"category", "seller", "variants", "brand"})
     @Query("SELECT p FROM Product p WHERE p.id = :id")
     Optional<Product> findWithDetailsById(@Param("id") UUID id);
 
+    @EntityGraph(attributePaths = {"category", "seller", "brand"})
     Page<Product> findByCategoryIdAndStatus(UUID categoryId, ProductStatus status, Pageable pageable);
 
+    @EntityGraph(attributePaths = {"category", "seller", "brand"})
     Page<Product> findByStatus(ProductStatus status, Pageable pageable);
 
+    @EntityGraph(attributePaths = {"category", "seller", "brand"})
     Page<Product> findBySellerId(UUID sellerId, Pageable pageable);
+
+    @EntityGraph(attributePaths = {"category", "seller", "variants", "brand"})
+    @Query("SELECT p FROM Product p WHERE p.brand.id = :brandId")
+    Page<Product> findByBrandId(@Param("brandId") UUID brandId, Pageable pageable);
+
+    @EntityGraph(attributePaths = {"category", "seller", "variants", "brand"})
+    @Query("SELECT p FROM Product p WHERE p.brand.id = :brandId")
+    List<Product> findByBrandId(@Param("brandId") UUID brandId);
 }

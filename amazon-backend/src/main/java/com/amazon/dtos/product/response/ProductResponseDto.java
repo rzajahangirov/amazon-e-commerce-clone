@@ -24,6 +24,7 @@ public class ProductResponseDto {
     private UUID sellerId;
     private String sellerName;
     private UUID brandId;
+    private String brandName;
     private UUID categoryId;
     private String categoryName;
     private String title;

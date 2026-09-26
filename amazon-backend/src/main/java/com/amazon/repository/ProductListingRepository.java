@@ -26,4 +26,7 @@ public interface ProductListingRepository extends JpaRepository<ProductListing, 
     @EntityGraph(attributePaths = {"productVariant", "productVariant.product", "seller"})
     @Query("SELECT pl FROM ProductListing pl WHERE pl.id = :id")
     Optional<ProductListing> findWithDetailsById(@Param("id") UUID id);
+
+    @Query("SELECT pl FROM ProductListing pl WHERE pl.productVariant.product.brand.id = :brandId")
+    List<ProductListing> findByBrandId(@Param("brandId") UUID brandId);
 }
