@@ -1,7 +1,10 @@
 import type { ResponseDto } from './types';
 
-export const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080/v1/api';
+// Read API base URL dynamically from environment (supports both root URL and /v1/api suffix)
+const rawBaseUrl = (import.meta.env.VITE_API_BASE_URL || 'https://amazon-e-commerce-clone-q5pc.onrender.com').trim();
+export const API_BASE_URL = rawBaseUrl.endsWith('/v1/api')
+  ? rawBaseUrl.replace(/\/+$/, '')
+  : `${rawBaseUrl.replace(/\/+$/, '')}/v1/api`;
 
 export const CUSTOMER_TOKEN_KEY = 'customer_access_token';
 export const ADMIN_TOKEN_KEY = 'admin_access_token';
@@ -28,10 +31,6 @@ export function getAccessToken(): string {
   const generalToken = localStorage.getItem('access_token');
   if (generalToken) {
     return generalToken;
-  }
-  const fromEnv = import.meta.env.VITE_ADMIN_ACCESS_TOKEN;
-  if (fromEnv) {
-    return fromEnv;
   }
   return '';
 }
@@ -90,6 +89,7 @@ export async function apiRequest<T>(
 
   const response = await fetch(buildUrl(path, query), {
     ...init,
+    credentials: init.credentials ?? 'include',
     headers: requestHeaders,
   });
 

@@ -83,6 +83,12 @@ function redactSecrets(text) {
     '$1[REDACTED_TOKEN]'
   );
 
+  // JWT signing secrets and token secrets in environment/config assignments
+  redacted = redacted.replace(
+    /(?<!\$\{)((?:JWT[_-]?SECRET|JWT[_-]?SIGNING[_-]?KEY|TOKEN[_-]?SECRET|SIGNING[_-]?SECRET)[ \t]*[:=][ \t]*['"]?)(?!(?:\[REDACTED(?:_[A-Z]+)?\]|YOUR_[A-Z0-9_]+|\$\{))([^\s\r\n'";`]+)(['";`]?)/gi,
+    '$1[REDACTED_JWT_SECRET]$3'
+  );
+
   return redacted;
 }
 
