@@ -22,3 +22,6 @@
 Thumbs.db
 *.log
 uploads/
+.neon
+.env.local
+node_modules/

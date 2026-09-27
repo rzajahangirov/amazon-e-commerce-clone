@@ -33,8 +33,27 @@ export function useAdminAnalytics() {
   }, []);
 
   useEffect(() => {
-    void load(true);
-  }, [load]);
+    let ignore = false;
+    const run = async () => {
+      try {
+        const analytics = await fetchAdminAnalytics();
+        if (!ignore) {
+          setData(analytics);
+          lastFetchedAt.current = Date.now();
+        }
+      } catch (err) {
+        if (!ignore) {
+          const message =
+            err instanceof ApiError ? err.message : 'Failed to load platform analytics';
+          setError(message);
+        }
+      } finally {
+        if (!ignore) setLoading(false);
+      }
+    };
+    void run();
+    return () => { ignore = true; };
+  }, []);
 
   return { data, loading, error, refetch: () => load(true) };
 }

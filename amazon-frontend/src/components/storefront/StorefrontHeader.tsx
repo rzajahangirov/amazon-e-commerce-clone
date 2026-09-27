@@ -10,20 +10,27 @@ export const StorefrontHeader: React.FC = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
-  const [query, setQuery] = useState(searchParams.get('query') || '');
-  const [selectedCategory, setSelectedCategory] = useState(searchParams.get('categoryId') || '');
+  const urlQuery = searchParams.get('query') || '';
+  const urlCategory = searchParams.get('categoryId') || '';
+
+  const [query, setQuery] = useState(urlQuery);
+  const [selectedCategory, setSelectedCategory] = useState(urlCategory);
+  const [prevUrlState, setPrevUrlState] = useState({ query: urlQuery, categoryId: urlCategory });
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
 
-  useEffect(() => {
-    setQuery(searchParams.get('query') || '');
-    setSelectedCategory(searchParams.get('categoryId') || '');
-  }, [searchParams]);
+  if (prevUrlState.query !== urlQuery || prevUrlState.categoryId !== urlCategory) {
+    setPrevUrlState({ query: urlQuery, categoryId: urlCategory });
+    setQuery(urlQuery);
+    setSelectedCategory(urlCategory);
+  }
 
   useEffect(() => {
+    let ignore = false;
     storefrontApi
       .getRootCategories()
-      .then((data) => setCategories(data))
-      .catch(() => setCategories([]));
+      .then((data) => { if (!ignore) setCategories(data); })
+      .catch(() => { if (!ignore) setCategories([]); });
+    return () => { ignore = true; };
   }, []);
 
   const handleSearchSubmit = (e: React.FormEvent) => {

@@ -14,7 +14,6 @@ export const OrdersPage: React.FC = () => {
   const fetchOrders = useCallback(async () => {
     if (!isAuthenticated) return;
     try {
-      setLoading(true);
       const res = await storefrontApi.getMyOrders(0, 20);
       setOrders(res.content || []);
     } catch {
@@ -25,8 +24,31 @@ export const OrdersPage: React.FC = () => {
   }, [isAuthenticated]);
 
   useEffect(() => {
-    fetchOrders();
-  }, [fetchOrders]);
+    let ignore = false;
+    if (!isAuthenticated) {
+      return;
+    }
+    const run = async () => {
+      try {
+        const res = await storefrontApi.getMyOrders(0, 20);
+        if (!ignore) {
+          setOrders(res.content || []);
+        }
+      } catch {
+        if (!ignore) {
+          setOrders([]);
+        }
+      } finally {
+        if (!ignore) {
+          setLoading(false);
+        }
+      }
+    };
+    void run();
+    return () => {
+      ignore = true;
+    };
+  }, [isAuthenticated]);
 
   const handleCancelOrder = async (orderId: string) => {
     if (!window.confirm('Are you sure you want to cancel this enterprise order? Restocked inventory will be returned.')) {

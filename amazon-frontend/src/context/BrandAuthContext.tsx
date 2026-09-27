@@ -21,8 +21,6 @@ export interface BrandAuthContextType {
   currentMember: BrandMemberResponseDto | null;
   detectedRole: BrandRole;
   activeRole: BrandRole;
-  simulatedRole: BrandRole | null;
-  setSimulatedRole: (role: BrandRole | null) => void;
   permissions: BrandPermissions;
   loading: boolean;
   error: string | null;
@@ -35,10 +33,6 @@ export const BrandAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [profile, setProfile] = useState<BrandProfileResponseDto | null>(null);
   const [currentMember, setCurrentMember] = useState<BrandMemberResponseDto | null>(null);
   const [detectedRole, setDetectedRole] = useState<BrandRole>('BRAND_OWNER');
-  const [simulatedRole, setSimulatedRoleState] = useState<BrandRole | null>(() => {
-    const saved = localStorage.getItem('simulated_brand_role');
-    return (saved as BrandRole) || null;
-  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -49,12 +43,30 @@ export const BrandAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       const data = await brandApi.getBrandProfile();
       setProfile(data);
 
-      // Find current user's membership. If not matched, default to the first member or BRAND_OWNER
       if (data.teamMembers && data.teamMembers.length > 0) {
-        // Pick primary owner or first member
-        const owner = data.teamMembers.find((m) => m.brandRole === 'BRAND_OWNER') || data.teamMembers[0];
-        setCurrentMember(owner);
-        setDetectedRole(owner.brandRole);
+        // Automatically match authenticated user email if available
+        let matchedMember: BrandMemberResponseDto | undefined;
+        const rawUser = localStorage.getItem('amazon_customer_user_v1');
+        if (rawUser) {
+          try {
+            const userObj = JSON.parse(rawUser);
+            if (userObj.email) {
+              matchedMember = data.teamMembers.find(
+                (m) => m.userEmail?.toLowerCase() === userObj.email.toLowerCase()
+              );
+            }
+          } catch {
+            // ignore
+          }
+        }
+
+        const resolved =
+          matchedMember ||
+          data.teamMembers.find((m) => m.brandRole === 'BRAND_OWNER') ||
+          data.teamMembers[0];
+
+        setCurrentMember(resolved);
+        setDetectedRole(resolved.brandRole);
       } else {
         setDetectedRole('BRAND_OWNER');
       }
@@ -68,19 +80,56 @@ export const BrandAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   };
 
   useEffect(() => {
-    void fetchProfile();
+    let ignore = false;
+    const run = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const data = await brandApi.getBrandProfile();
+        if (ignore) return;
+        setProfile(data);
+
+        if (data.teamMembers && data.teamMembers.length > 0) {
+          let matchedMember: BrandMemberResponseDto | undefined;
+          const rawUser = localStorage.getItem('amazon_customer_user_v1');
+          if (rawUser) {
+            try {
+              const userObj = JSON.parse(rawUser);
+              if (userObj.email) {
+                matchedMember = data.teamMembers.find(
+                  (m) => m.userEmail?.toLowerCase() === userObj.email.toLowerCase()
+                );
+              }
+            } catch {
+              // ignore
+            }
+          }
+          const resolved =
+            matchedMember ||
+            data.teamMembers.find((m) => m.brandRole === 'BRAND_OWNER') ||
+            data.teamMembers[0];
+          if (!ignore) {
+            setCurrentMember(resolved);
+            setDetectedRole(resolved.brandRole);
+          }
+        } else {
+          if (!ignore) setDetectedRole('BRAND_OWNER');
+        }
+      } catch (err) {
+        if (!ignore) {
+          console.error('Error loading brand profile:', err);
+          setError(err instanceof Error ? err.message : 'Failed to load brand profile');
+          setDetectedRole('BRAND_OWNER');
+        }
+      } finally {
+        if (!ignore) setLoading(false);
+      }
+    };
+    void run();
+    return () => { ignore = true; };
   }, []);
 
-  const setSimulatedRole = (role: BrandRole | null) => {
-    if (role) {
-      localStorage.setItem('simulated_brand_role', role);
-    } else {
-      localStorage.removeItem('simulated_brand_role');
-    }
-    setSimulatedRoleState(role);
-  };
-
-  const activeRole: BrandRole = simulatedRole || detectedRole;
+  const activeRole: BrandRole = detectedRole;
 
   const permissions: BrandPermissions = useMemo(() => {
     switch (activeRole) {
@@ -178,8 +227,6 @@ export const BrandAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         currentMember,
         detectedRole,
         activeRole,
-        simulatedRole,
-        setSimulatedRole,
         permissions,
         loading,
         error,
@@ -191,6 +238,7 @@ export const BrandAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   );
 };
 
+// oxlint-disable-next-line react/only-export-components
 export function useBrandAuth(): BrandAuthContextType {
   const context = useContext(BrandAuthContext);
   if (!context) {

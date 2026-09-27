@@ -68,9 +68,7 @@ export function SellerOrdersPage() {
           >
             📦 Bulk Mark as Shipped ({selectedItems.length})
           </button>
-          <button type="button" className="seller-btn seller-btn-outline">
-            📄 Download Packing Slips
-          </button>
+
           <button type="button" className="seller-btn seller-btn-outline" onClick={() => void refetch()}>
             🔄 Refresh
           </button>

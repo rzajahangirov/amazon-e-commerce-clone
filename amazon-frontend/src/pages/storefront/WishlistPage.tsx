@@ -26,8 +26,21 @@ export const WishlistPage: React.FC = () => {
   }, [isAuthenticated]);
 
   useEffect(() => {
-    fetchWishlist();
-  }, [fetchWishlist]);
+    if (!isAuthenticated) return;
+    let ignore = false;
+    const run = async () => {
+      try {
+        const res = await storefrontApi.getWishlist(0, 50);
+        if (!ignore) setItems(res.content || []);
+      } catch {
+        if (!ignore) setItems([]);
+      } finally {
+        if (!ignore) setLoading(false);
+      }
+    };
+    void run();
+    return () => { ignore = true; };
+  }, [isAuthenticated]);
 
   const handleRemove = async (productId: string) => {
     try {

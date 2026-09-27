@@ -32,7 +32,19 @@ export const BrandMarketingPage: React.FC = () => {
   };
 
   useEffect(() => {
-    void fetchPosts();
+    let ignore = false;
+    const run = async () => {
+      try {
+        const res = await brandApi.getBrandPosts(0, 50);
+        if (!ignore) setPosts(res.content);
+      } catch (err) {
+        console.error('Failed to load brand posts:', err);
+      } finally {
+        if (!ignore) setLoading(false);
+      }
+    };
+    void run();
+    return () => { ignore = true; };
   }, []);
 
   const handleCreatePost = async (e: React.FormEvent) => {
@@ -106,10 +118,6 @@ export const BrandMarketingPage: React.FC = () => {
               <span>🔒 Marketing Creation Disabled</span>
             </button>
           )}
-
-          <button type="button" className="brand-btn brand-btn-outline" title="Export campaign reports">
-            <span>📥</span>
-          </button>
         </div>
       </div>
 
@@ -215,16 +223,8 @@ export const BrandMarketingPage: React.FC = () => {
 
         <div className="brand-toolbar-group">
           <span style={{ fontSize: '0.8rem', color: '#64748b' }}>
-            Displaying {filteredPosts.length} of {posts.length || 86} campaigns
+            Displaying {filteredPosts.length} of {posts.length} campaigns
           </span>
-          <div style={{ display: 'flex', gap: '0.25rem' }}>
-            <button type="button" className="brand-btn brand-btn-outline" style={{ padding: '0.3rem 0.5rem' }}>
-              ▦
-            </button>
-            <button type="button" className="brand-btn brand-btn-outline" style={{ padding: '0.3rem 0.5rem' }}>
-              ☰
-            </button>
-          </div>
         </div>
       </div>
 

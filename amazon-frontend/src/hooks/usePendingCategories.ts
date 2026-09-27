@@ -25,8 +25,25 @@ export function usePendingCategories() {
   }, []);
 
   useEffect(() => {
-    void load();
-  }, [load]);
+    let ignore = false;
+    const run = async () => {
+      try {
+        const list = await fetchPendingCategories();
+        if (!ignore) setCategories(list);
+      } catch (err) {
+        if (!ignore) {
+          const message =
+            err instanceof ApiError ? err.message : 'Failed to load pending categories';
+          setError(message);
+          setCategories([]);
+        }
+      } finally {
+        if (!ignore) setLoading(false);
+      }
+    };
+    void run();
+    return () => { ignore = true; };
+  }, []);
 
   return { categories, loading, error, refetch: load };
 }

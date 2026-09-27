@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { storefrontApi } from '../../api/storefrontApi';
 import type { Category, Product, ProductSortBy } from '../../api/storefrontTypes';
@@ -35,41 +35,45 @@ export const ProductListingPage: React.FC = () => {
       .catch(() => setCategories([]));
   }, []);
 
-  // Fetch products whenever params change
-  const fetchProducts = useCallback(async () => {
-    try {
-      setLoading(true);
-      const res = await storefrontApi.searchProducts({
-        query: query || undefined,
-        categoryId: categoryId || undefined,
-        minPrice,
-        maxPrice,
-        minRating,
-        sortBy,
-        page,
-        size: 16,
-      });
-
-      let items = res.content || [];
-      if (badgeFilter) {
-        items = items.filter((p) => p.badgeTag === badgeFilter);
-      }
-
-      setProducts(items);
-      setTotalElements(res.totalElements ?? items.length);
-      setTotalPages(res.totalPages ?? 1);
-    } catch {
-      setProducts([]);
-      setTotalElements(0);
-      setTotalPages(1);
-    } finally {
-      setLoading(false);
-    }
-  }, [query, categoryId, minPrice, maxPrice, minRating, sortBy, page, badgeFilter]);
-
   useEffect(() => {
-    fetchProducts();
-  }, [fetchProducts]);
+    let ignore = false;
+    const run = async () => {
+      try {
+        setLoading(true);
+        const res = await storefrontApi.searchProducts({
+          query: query || undefined,
+          categoryId: categoryId || undefined,
+          minPrice,
+          maxPrice,
+          minRating,
+          sortBy,
+          page,
+          size: 16,
+        });
+
+        let items = res.content || [];
+        if (badgeFilter) {
+          items = items.filter((p) => p.badgeTag === badgeFilter);
+        }
+
+        if (!ignore) {
+          setProducts(items);
+          setTotalElements(res.totalElements ?? items.length);
+          setTotalPages(res.totalPages ?? 1);
+        }
+      } catch {
+        if (!ignore) {
+          setProducts([]);
+          setTotalElements(0);
+          setTotalPages(1);
+        }
+      } finally {
+        if (!ignore) setLoading(false);
+      }
+    };
+    void run();
+    return () => { ignore = true; };
+  }, [query, categoryId, minPrice, maxPrice, minRating, sortBy, page, badgeFilter]);
 
   const updateParam = (key: string, value: string | undefined) => {
     const next = new URLSearchParams(searchParams);

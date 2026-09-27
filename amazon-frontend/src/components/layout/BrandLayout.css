@@ -317,6 +317,25 @@
   gap: 1rem;
 }
 
+.brand-role-badge-wrap {
+  display: flex;
+  align-items: center;
+}
+
+.brand-role-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background-color: #f0f9ff;
+  color: #0369a1;
+  border: 1px solid #bae6fd;
+  padding: 0.35rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
 .brand-topbar-market {
   display: flex;
   align-items: center;

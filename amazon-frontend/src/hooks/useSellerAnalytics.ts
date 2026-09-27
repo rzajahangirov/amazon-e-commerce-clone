@@ -33,8 +33,36 @@ export function useSellerAnalytics() {
   }, []);
 
   useEffect(() => {
-    void load(true);
-  }, [load]);
+    let ignore = false;
+    const run = async () => {
+      const now = Date.now();
+      if (lastFetchedAt.current && now - lastFetchedAt.current < STALE_MS) {
+        if (!ignore) setLoading(false);
+        return;
+      }
+      if (!ignore) {
+        setLoading(true);
+        setError(null);
+      }
+      try {
+        const analytics = await fetchSellerAnalytics();
+        if (!ignore) {
+          setData(analytics);
+          lastFetchedAt.current = Date.now();
+        }
+      } catch (err) {
+        if (!ignore) {
+          const message =
+            err instanceof ApiError ? err.message : 'Failed to load seller analytics';
+          setError(message);
+        }
+      } finally {
+        if (!ignore) setLoading(false);
+      }
+    };
+    void run();
+    return () => { ignore = true; };
+  }, []);
 
   return { data, loading, error, refetch: () => load(true) };
 }

@@ -136,11 +136,29 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
   };
 
   useEffect(() => {
-    if (isAuthenticated) {
-      refreshCart();
-      refreshWishlist();
-    }
-  }, [isAuthenticated, refreshCart, refreshWishlist]);
+    if (!isAuthenticated) return;
+    let ignore = false;
+    const sync = async () => {
+      try {
+        const [cartRes, wishRes] = await Promise.all([
+          storefrontApi.getCart().catch(() => null),
+          storefrontApi.getWishlist(0, 100).catch(() => null),
+        ]);
+        if (!ignore) {
+          if (cartRes) {
+            setServerCart(cartRes);
+          }
+          if (wishRes) {
+            setWishlistIds(new Set((wishRes.content || []).map((w: { productId: string }) => w.productId)));
+          }
+        }
+      } catch {
+        // ignore
+      }
+    };
+    void sync();
+    return () => { ignore = true; };
+  }, [isAuthenticated]);
 
   const login = async (email: string, password: string) => {
     const res = await storefrontApi.login(email, password);
@@ -353,6 +371,7 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
   );
 };
 
+// oxlint-disable-next-line react/only-export-components
 export const useCustomerAuth = () => {
   const ctx = useContext(CustomerAuthContext);
   if (!ctx) {

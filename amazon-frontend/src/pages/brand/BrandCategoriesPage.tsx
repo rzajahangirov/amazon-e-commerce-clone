@@ -32,7 +32,19 @@ export const BrandCategoriesPage: React.FC = () => {
   };
 
   useEffect(() => {
-    void fetchProposals();
+    let ignore = false;
+    const run = async () => {
+      try {
+        const data = await brandApi.getCategoryProposals();
+        if (!ignore) setProposals(data);
+      } catch (err) {
+        console.error('Failed to load category proposals:', err);
+      } finally {
+        if (!ignore) setLoading(false);
+      }
+    };
+    void run();
+    return () => { ignore = true; };
   }, []);
 
   const handlePropose = async (e: React.FormEvent) => {
@@ -275,16 +287,6 @@ export const BrandCategoriesPage: React.FC = () => {
                     {item.commercialJustification ||
                       'Technical classification for 100W+ Gallium Nitride devices.'}
                   </div>
-                  <a
-                    href="#full"
-                    style={{ fontSize: '0.7rem', color: '#0284c7', fontWeight: 600, textDecoration: 'none' }}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      alert(item.commercialJustification || 'Complete taxonomy RFC filed with Amazon Taxonomy Committee.');
-                    }}
-                  >
-                    Read full justification &rarr;
-                  </a>
                 </td>
                 <td>
                   <div style={{ fontSize: '0.75rem', color: '#64748b', marginBottom: '0.2rem' }}>
@@ -302,13 +304,8 @@ export const BrandCategoriesPage: React.FC = () => {
         </table>
       </div>
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.775rem', color: '#64748b', padding: '0.5rem 0' }}>
-        <span>Showing {filteredProposals.length} of {proposals.length || 14} category proposal records</span>
-        <div style={{ display: 'flex', gap: '0.5rem' }}>
-          <button type="button" className="brand-btn brand-btn-outline" style={{ padding: '0.25rem 0.6rem', fontSize: '0.75rem' }} disabled>Previous</button>
-          <span style={{ padding: '0.25rem 0.5rem', fontWeight: 600 }}>Page 1 of 3</span>
-          <button type="button" className="brand-btn brand-btn-outline" style={{ padding: '0.25rem 0.6rem', fontSize: '0.75rem' }}>Next</button>
-        </div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.775rem', color: '#64748b', padding: '0.75rem 0' }}>
+        <span>Showing {filteredProposals.length} of {proposals.length} category proposal records</span>
       </div>
 
       {/* Modal: Propose New Category */}

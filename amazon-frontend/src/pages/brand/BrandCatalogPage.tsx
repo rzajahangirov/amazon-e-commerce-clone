@@ -50,7 +50,25 @@ export const BrandCatalogPage: React.FC = () => {
   };
 
   useEffect(() => {
-    void fetchProducts();
+    let ignore = false;
+    const run = async () => {
+      try {
+        setLoading(true);
+        const res = await brandApi.getBrandProducts(0, 50);
+        if (!ignore) {
+          setProducts(res.content);
+          if (res.content.length > 0) {
+            setSelectedProductId((prev) => prev || res.content[0].id);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load products:', err);
+      } finally {
+        if (!ignore) setLoading(false);
+      }
+    };
+    void run();
+    return () => { ignore = true; };
   }, []);
 
   const handleCreateProduct = async (e: React.FormEvent) => {
@@ -88,6 +106,16 @@ export const BrandCatalogPage: React.FC = () => {
     setVarAsin('');
     setVarName('');
     void fetchProducts();
+  };
+
+  const handleExportCatalog = () => {
+    const blob = new Blob([JSON.stringify(products, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `brand-catalog-${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   const selectedProduct = products.find((p) => p.id === selectedProductId) || products[0];
@@ -130,11 +158,13 @@ export const BrandCatalogPage: React.FC = () => {
         </div>
 
         <div className="brand-page-actions">
-          <button type="button" className="brand-btn brand-btn-outline">
-            <span>📥 Bulk ASIN Import</span>
-          </button>
-          <button type="button" className="brand-btn brand-btn-outline">
-            <span>📊 Export Catalog (JSON/CSV)</span>
+          <button
+            type="button"
+            className="brand-btn brand-btn-outline"
+            onClick={handleExportCatalog}
+            title="Download catalog definitions as JSON"
+          >
+            <span>📊 Export Catalog (JSON)</span>
           </button>
 
           {/* DYNAMIC RBAC GUARD: Hide/Disable "+ Create Master Product Template" for BRAND_SELLER and BRAND_MARKETING_MEMBER */}
@@ -478,9 +508,6 @@ export const BrandCatalogPage: React.FC = () => {
                     >
                       {i === 2 ? 'AMAZON SYNCED' : 'LOCKED BY REGISTRY'}
                     </span>
-                    <button type="button" className="brand-icon-btn" title="Variant Settings">
-                      ⚙️
-                    </button>
                   </div>
                 </div>
               ))

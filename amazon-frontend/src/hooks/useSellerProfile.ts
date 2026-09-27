@@ -42,8 +42,24 @@ export function useSellerProfile() {
   }, []);
 
   useEffect(() => {
-    void load();
-  }, [load]);
+    let ignore = false;
+    const run = async () => {
+      try {
+        const profile = await fetchSellerProfile();
+        if (!ignore) setData(profile);
+      } catch (err) {
+        if (!ignore) {
+          const message =
+            err instanceof ApiError ? err.message : 'Failed to load seller profile';
+          setError(message);
+        }
+      } finally {
+        if (!ignore) setLoading(false);
+      }
+    };
+    void run();
+    return () => { ignore = true; };
+  }, []);
 
   return { data, loading, saving, error, refetch: load, save };
 }

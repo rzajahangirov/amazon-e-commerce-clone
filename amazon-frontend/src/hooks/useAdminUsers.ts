@@ -9,11 +9,20 @@ export function useAdminUsers(filters: AdminUsersQuery) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const { active, email, role, size } = filters;
+
+  const [prevFilterKey, setPrevFilterKey] = useState(() => `${active}_${email}_${role}`);
+  const currentFilterKey = `${active}_${email}_${role}`;
+  if (prevFilterKey !== currentFilterKey) {
+    setPrevFilterKey(currentFilterKey);
+    setPage(0);
+  }
+
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const payload = await fetchAdminUsers({ ...filters, page });
+      const payload = await fetchAdminUsers({ active, email, role, size, page });
       setResult(payload);
     } catch (err) {
       const message = err instanceof ApiError ? err.message : 'Failed to load users';
@@ -22,15 +31,31 @@ export function useAdminUsers(filters: AdminUsersQuery) {
     } finally {
       setLoading(false);
     }
-  }, [filters.active, filters.email, filters.role, filters.size, page]);
+  }, [active, email, role, size, page]);
 
   useEffect(() => {
-    void load();
-  }, [load]);
-
-  useEffect(() => {
-    setPage(0);
-  }, [filters.active, filters.email, filters.role]);
+    let ignore = false;
+    const run = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const payload = await fetchAdminUsers({ active, email, role, size, page });
+        if (!ignore) setResult(payload);
+      } catch (err) {
+        if (!ignore) {
+          const message = err instanceof ApiError ? err.message : 'Failed to load users';
+          setError(message);
+          setResult(null);
+        }
+      } finally {
+        if (!ignore) setLoading(false);
+      }
+    };
+    void run();
+    return () => {
+      ignore = true;
+    };
+  }, [active, email, role, size, page]);
 
   return {
     users: result?.content ?? [],

@@ -2,7 +2,7 @@ import { useBrandAuth } from '../context/BrandAuthContext';
 import type { BrandRole } from '../api/brandTypes';
 
 export function useBrandRBAC() {
-  const { activeRole, simulatedRole, setSimulatedRole, permissions, loading, profile, currentMember } =
+  const { activeRole, detectedRole, permissions, loading, profile, currentMember } =
     useBrandAuth();
 
   const hasAnyRole = (roles: BrandRole[]): boolean => {
@@ -31,8 +31,7 @@ export function useBrandRBAC() {
 
   return {
     activeRole,
-    simulatedRole,
-    setSimulatedRole,
+    detectedRole,
     permissions,
     loading,
     profile,

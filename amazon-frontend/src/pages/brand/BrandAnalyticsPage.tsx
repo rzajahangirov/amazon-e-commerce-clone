@@ -35,6 +35,17 @@ export const BrandAnalyticsPage: React.FC = () => {
     }
   };
 
+  const handleExportMetrics = () => {
+    if (!analytics) return;
+    const blob = new Blob([JSON.stringify(analytics, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `brand-analytics-${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const products = analytics?.topSellingProducts || [];
 
   if (loading && !analytics) {
@@ -89,8 +100,13 @@ export const BrandAnalyticsPage: React.FC = () => {
             >
               <span>{syncing ? '⟳ Syncing...' : '↻ Sync Marketplace Data'}</span>
             </button>
-            <button type="button" className="brand-btn brand-btn-outline">
-              <span>📥 Export Report CSV/PDF</span>
+            <button
+              type="button"
+              className="brand-btn brand-btn-outline"
+              onClick={handleExportMetrics}
+              title="Export analytics telemetry as JSON"
+            >
+              <span>📊 Export Metrics (JSON)</span>
             </button>
           </div>
           <span style={{ fontSize: '0.7rem', color: '#64748b' }}>
@@ -387,23 +403,9 @@ export const BrandAnalyticsPage: React.FC = () => {
                 <span>⚠️</span>
                 <span>{analytics?.unauthorizedSellerAlertsCount ?? 4} Unauthorized Seller Alerts</span>
               </div>
-              <p style={{ margin: '0.35rem 0 0.65rem', fontSize: '0.75rem', color: '#991b1b', lineHeight: 1.4 }}>
+              <p style={{ margin: '0.35rem 0 0', fontSize: '0.75rem', color: '#991b1b', lineHeight: 1.4 }}>
                 Suspected rogue mapping detected on 2 core audio variants in EU/UK regions.
               </p>
-              <button
-                type="button"
-                className="brand-btn"
-                style={{
-                  width: '100%',
-                  backgroundColor: '#b91c1c',
-                  color: '#ffffff',
-                  fontSize: '0.75rem',
-                  padding: '0.45rem',
-                }}
-                onClick={() => alert(`Reviewing ${analytics?.unauthorizedSellerAlertsCount ?? 4} suspected seller infringements...`)}
-              >
-                Review Suspected Infringements &rarr;
-              </button>
             </div>
           </div>
 

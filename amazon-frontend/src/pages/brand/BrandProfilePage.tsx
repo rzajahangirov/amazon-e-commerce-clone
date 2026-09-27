@@ -46,7 +46,29 @@ export const BrandProfilePage: React.FC = () => {
   };
 
   useEffect(() => {
-    void loadData();
+    let ignore = false;
+    const run = async () => {
+      try {
+        const [profData, histData] = await Promise.all([
+          brandApi.getBrandProfile(),
+          brandApi.getUpdateRequests(),
+        ]);
+        if (!ignore) {
+          setProfile(profData);
+          setHistory(histData);
+        }
+      } catch (err) {
+        console.error('Failed to load profile & update history:', err);
+      } finally {
+        if (!ignore) {
+          setLoading(false);
+        }
+      }
+    };
+    void run();
+    return () => {
+      ignore = true;
+    };
   }, []);
 
   const handleSubmitProposal = async (e: React.FormEvent) => {
@@ -104,9 +126,6 @@ export const BrandProfilePage: React.FC = () => {
         </div>
 
         <div className="brand-page-actions">
-          <button type="button" className="brand-btn brand-btn-outline">
-            <span>📜 Audit Trails</span>
-          </button>
           <a
             href="#propose-section"
             className="brand-btn brand-btn-primary"
@@ -146,19 +165,9 @@ export const BrandProfilePage: React.FC = () => {
           </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <div style={{ textAlign: 'right' }}>
-            <div style={{ fontSize: '0.675rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 600 }}>Queue Position</div>
-            <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#0f172a' }}>#14 of 92 pending</div>
-          </div>
-          <button
-            type="button"
-            className="brand-btn brand-btn-outline"
-            style={{ fontSize: '0.75rem', padding: '0.35rem 0.65rem' }}
-            onClick={() => alert('Viewing Submission Specimen: Corporate Reincorporation')}
-          >
-            View Submission Specimen &rarr;
-          </button>
+        <div style={{ textAlign: 'right' }}>
+          <div style={{ fontSize: '0.675rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 600 }}>Queue Position</div>
+          <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#0f172a' }}>#14 of 92 pending</div>
         </div>
       </div>
 
@@ -309,20 +318,10 @@ export const BrandProfilePage: React.FC = () => {
                       <div style={{ fontSize: '0.675rem', color: '#64748b' }}>{doc.size} &bull; {doc.type}</div>
                     </div>
                   </div>
-                  <button type="button" className="brand-icon-btn" title="Download Document">
-                    📥
-                  </button>
+                  <span style={{ fontSize: '0.75rem', color: '#047857', fontWeight: 600 }}>✓ Verified</span>
                 </div>
               ))}
             </div>
-
-            <button
-              type="button"
-              className="brand-btn brand-btn-outline"
-              style={{ width: '100%', marginTop: '0.75rem', fontSize: '0.775rem' }}
-            >
-              📥 Download Registry Dossier
-            </button>
           </div>
         </div>
       </div>
@@ -442,13 +441,18 @@ export const BrandProfilePage: React.FC = () => {
                     onChange={(e) => setProposedLogoUrl(e.target.value)}
                     required
                   />
-                  <button
-                    type="button"
-                    className="brand-btn brand-btn-outline"
-                    style={{ flexShrink: 0, fontSize: '0.75rem' }}
+                  <span
+                    style={{
+                      flexShrink: 0,
+                      fontSize: '0.75rem',
+                      color: '#047857',
+                      fontWeight: 600,
+                      display: 'flex',
+                      alignItems: 'center',
+                    }}
                   >
-                    ✓ Asset Resolved (256x64 SVG)
-                  </button>
+                    ✓ SVG Resolved
+                  </span>
                 </div>
               </div>
 
@@ -480,26 +484,18 @@ export const BrandProfilePage: React.FC = () => {
                   style={{
                     border: '2px dashed #cbd5e1',
                     borderRadius: 8,
-                    padding: '2rem 1.5rem',
+                    padding: '1.5rem',
                     textAlign: 'center',
                     backgroundColor: '#f8fafc',
-                    cursor: 'pointer',
                   }}
                 >
-                  <span style={{ fontSize: '2rem', display: 'block', marginBottom: '0.5rem' }}>☁️</span>
+                  <span style={{ fontSize: '1.8rem', display: 'block', marginBottom: '0.4rem' }}>☁️</span>
                   <strong style={{ display: 'block', fontSize: '0.85rem', color: '#0f172a' }}>
-                    Drop USPTO Certificate Amendments, Certificates of Merger, or POA
+                    USPTO Certificate Amendments, Certificates of Merger, or POA
                   </strong>
                   <span style={{ display: 'block', fontSize: '0.725rem', color: '#64748b', marginTop: '0.25rem' }}>
-                    Accepted file formats: PDF, TIFF, PNG up to 25MB each. Must include official governmental registrar stamps and seals.
+                    Accepted formats: PDF, TIFF, PNG up to 25MB each. Registrar stamps and seals required.
                   </span>
-                  <button
-                    type="button"
-                    className="brand-btn brand-btn-outline"
-                    style={{ marginTop: '0.75rem', fontSize: '0.75rem', padding: '0.35rem 0.75rem' }}
-                  >
-                    Browse Files
-                  </button>
                 </div>
               </div>
 
@@ -515,13 +511,10 @@ export const BrandProfilePage: React.FC = () => {
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.75rem', color: '#64748b' }}>
                   <span>🔒</span>
-                  <span>Submissions are digitally signed with Brand Owner Key #99A1-F280</span>
+                  <span>Digitally signed with Brand Owner Key</span>
                 </div>
 
-                <div style={{ display: 'flex', gap: '0.75rem' }}>
-                  <button type="button" className="brand-btn brand-btn-outline">
-                    Save Draft
-                  </button>
+                <div>
                   <button
                     type="submit"
                     className="brand-btn brand-btn-primary"
@@ -553,9 +546,6 @@ export const BrandProfilePage: React.FC = () => {
               Archived record of all previous trademark revisions, name amendments, and ownership validations
             </p>
           </div>
-          <button type="button" className="brand-btn brand-btn-outline" style={{ fontSize: '0.75rem' }}>
-            <span>📥 Export Audit CSV</span>
-          </button>
         </div>
 
         <div className="brand-table-wrap">
@@ -611,9 +601,7 @@ export const BrandProfilePage: React.FC = () => {
                     )}
                   </td>
                   <td>
-                    <button type="button" className="brand-icon-btn" title="View Certificate">
-                      👁️
-                    </button>
+                    <span className="brand-badge brand-badge-locked">Verified</span>
                   </td>
                 </tr>
               ))}

@@ -41,8 +41,24 @@ export function useSellerOrders(filters: SellerOrdersQuery) {
   );
 
   useEffect(() => {
-    void load();
-  }, [load]);
+    let ignore = false;
+    const run = async () => {
+      try {
+        const data = await fetchSellerOrders({ status, searchKey, startDate, endDate });
+        if (!ignore) setOrders(data);
+      } catch (err) {
+        if (!ignore) {
+          const message = err instanceof ApiError ? err.message : 'Failed to load orders';
+          setError(message);
+          setOrders([]);
+        }
+      } finally {
+        if (!ignore) setLoading(false);
+      }
+    };
+    void run();
+    return () => { ignore = true; };
+  }, [status, searchKey, startDate, endDate]);
 
   return { orders, loading, error, refetch: load, transitionStatus };
 }

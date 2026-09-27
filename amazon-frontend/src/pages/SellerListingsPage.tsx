@@ -63,9 +63,7 @@ export function SellerListingsPage() {
           >
             ➕ Attach Offer to Catalog ASIN
           </button>
-          <button type="button" className="seller-btn seller-btn-outline">
-            📤 Bulk Upload Flat File
-          </button>
+
           <button type="button" className="seller-btn seller-btn-outline" onClick={() => void refetch()}>
             🔄 Refresh
           </button>

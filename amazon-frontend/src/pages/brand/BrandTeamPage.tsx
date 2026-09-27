@@ -38,7 +38,20 @@ export const BrandTeamPage: React.FC = () => {
   };
 
   useEffect(() => {
-    void fetchMembers();
+    let ignore = false;
+    const run = async () => {
+      try {
+        setLoading(true);
+        const data = await brandApi.getBrandMembers();
+        if (!ignore) setMembers(data);
+      } catch (err) {
+        console.error('Failed to load brand members:', err);
+      } finally {
+        if (!ignore) setLoading(false);
+      }
+    };
+    void run();
+    return () => { ignore = true; };
   }, []);
 
   const handleAddMember = async (e: React.FormEvent) => {
@@ -118,9 +131,6 @@ export const BrandTeamPage: React.FC = () => {
         </div>
 
         <div className="brand-page-actions">
-          <button type="button" className="brand-btn brand-btn-outline">
-            <span>🛡️ Audit Logs</span>
-          </button>
           <button
             type="button"
             className="brand-btn brand-btn-primary"
@@ -249,7 +259,19 @@ export const BrandTeamPage: React.FC = () => {
             <option value="BRAND_MARKETING_MEMBER">Marketing</option>
           </select>
 
-          <button type="button" className="brand-btn brand-btn-outline">
+          <button
+            type="button"
+            className="brand-btn brand-btn-outline"
+            onClick={() => {
+              const blob = new Blob([JSON.stringify(filteredMembers, null, 2)], { type: 'application/json' });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = 'brand-team-export.json';
+              a.click();
+              URL.revokeObjectURL(url);
+            }}
+          >
             <span>📥 Export List</span>
           </button>
         </div>

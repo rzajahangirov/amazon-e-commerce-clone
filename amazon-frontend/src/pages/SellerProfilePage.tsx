@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useSellerProfile } from '../hooks/useSellerProfile';
 import type { UpdateSellerProfileRequest } from '../api/sellerTypes';
 import '../components/seller/SellerCommon.css';
 
 export function SellerProfilePage() {
   const { data, loading, saving, error, save } = useSellerProfile();
+  const initializedRef = useRef(false);
 
   const [formData, setFormData] = useState<UpdateSellerProfileRequest>({
     storeName: '',
@@ -21,8 +22,9 @@ export function SellerProfilePage() {
   const [saveSuccess, setSaveSuccess] = useState(false);
 
   useEffect(() => {
-    if (data) {
-      setFormData({
+    if (data && !initializedRef.current) {
+      initializedRef.current = true;
+      const next: UpdateSellerProfileRequest = {
         storeName: data.storeName || '',
         supportEmail: data.supportEmail || '',
         merchantPhone: data.merchantPhone || '',
@@ -31,7 +33,8 @@ export function SellerProfilePage() {
         stateTaxPermitNumber: data.stateTaxPermitNumber || '',
         businessAddress: data.businessAddress || '',
         bankAccountDetails: data.bankAccountDetails || '',
-      });
+      };
+      setFormData(next);
       setIsDirty(false);
     }
   }, [data]);
@@ -290,9 +293,7 @@ export function SellerProfilePage() {
                 <strong style={{ fontSize: '0.82rem' }}>Federal Tax Identifier (EIN)</strong>
                 <div style={{ fontSize: '0.72rem', color: '#64748b' }}>W-9 Status: Verified &amp; On-File (IRS TIN Match Passed)</div>
               </div>
-              <button type="button" className="seller-btn seller-btn-outline" style={{ fontSize: '0.75rem' }}>
-                📄 Download W-9 PDF
-              </button>
+              <span className="seller-badge-green" style={{ fontSize: '0.75rem' }}>✓ Verified</span>
             </div>
           </div>
         </div>

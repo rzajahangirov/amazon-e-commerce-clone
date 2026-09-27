@@ -69,9 +69,7 @@ export function SellerAnalyticsPage() {
           <button type="button" className="seller-btn seller-btn-outline" onClick={() => void refetch()}>
             🔄 Sync
           </button>
-          <button type="button" className="seller-btn seller-btn-primary">
-            📥 Export CSV Report
-          </button>
+
         </div>
       </div>
 
@@ -311,9 +309,7 @@ export function SellerAnalyticsPage() {
               </div>
             </div>
 
-            <button type="button" className="seller-btn seller-btn-primary" style={{ width: '100%', justifyContent: 'center' }}>
-              🏷️ Print Batch Shipping Labels ({pendingOrders})
-            </button>
+
           </div>
 
           {/* Buy Box Health Alerts */}
@@ -331,9 +327,7 @@ export function SellerAnalyticsPage() {
                 <div style={{ fontSize: '0.8rem', fontWeight: 700 }}>Logitech MX Master 3S</div>
                 <div style={{ fontSize: '0.72rem', color: '#64748b', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.25rem' }}>
                   <span>Yours: $99.99 → <strong style={{ color: '#ef4444' }}>Min: $94.49</strong></span>
-                  <button type="button" className="seller-btn seller-btn-primary" style={{ padding: '0.2rem 0.5rem', fontSize: '0.7rem' }}>
-                    Auto-Match
-                  </button>
+                  <span style={{ color: '#ef4444', fontWeight: 600, fontSize: '0.7rem' }}>Lost</span>
                 </div>
               </div>
 
@@ -341,9 +335,7 @@ export function SellerAnalyticsPage() {
                 <div style={{ fontSize: '0.8rem', fontWeight: 700 }}>Belkin BoostCharge Pro 3-in-1</div>
                 <div style={{ fontSize: '0.72rem', color: '#64748b', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.25rem' }}>
                   <span>Yours: $139.95 → <strong style={{ color: '#ef4444' }}>Min: $134.00</strong></span>
-                  <button type="button" className="seller-btn seller-btn-primary" style={{ padding: '0.2rem 0.5rem', fontSize: '0.7rem' }}>
-                    Auto-Match
-                  </button>
+                  <span style={{ color: '#ef4444', fontWeight: 600, fontSize: '0.7rem' }}>Lost</span>
                 </div>
               </div>
 
@@ -351,15 +343,13 @@ export function SellerAnalyticsPage() {
                 <div style={{ fontSize: '0.8rem', fontWeight: 700 }}>SanDisk Extreme 1TB microSD</div>
                 <div style={{ fontSize: '0.72rem', color: '#64748b', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.25rem' }}>
                   <span>Yours: $109.99 → <strong style={{ color: '#ef4444' }}>Min: $104.99</strong></span>
-                  <button type="button" className="seller-btn seller-btn-primary" style={{ padding: '0.2rem 0.5rem', fontSize: '0.7rem' }}>
-                    Auto-Match
-                  </button>
+                  <span style={{ color: '#ef4444', fontWeight: 600, fontSize: '0.7rem' }}>Lost</span>
                 </div>
               </div>
             </div>
 
             <div style={{ marginTop: '0.75rem', display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem' }}>
-              <a href="#rules" style={{ color: '#2563eb', textDecoration: 'none', fontWeight: 600 }}>Configure Global Repricing Rule →</a>
+              <span style={{ color: '#64748b', fontSize: '0.75rem', fontWeight: 600 }}>Review pricing strategy &rarr;</span>
               <span style={{ color: '#94a3b8', cursor: 'pointer' }}>Dismiss All</span>
             </div>
           </div>

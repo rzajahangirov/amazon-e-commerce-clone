@@ -1,13 +1,11 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
-import type { BrandRole } from '../../api/brandTypes';
 import { useBrandRBAC } from '../../hooks/useBrandRBAC';
 import './BrandLayout.css';
 
 export const BrandLayout: React.FC = () => {
-  const { activeRole, simulatedRole, setSimulatedRole, permissions, profile, roleTitle } = useBrandRBAC();
+  const { permissions, profile, roleTitle } = useBrandRBAC();
   const location = useLocation();
-  const [marketDropdownOpen, setMarketDropdownOpen] = useState(false);
 
   // Compute breadcrumb title based on path
   const getBreadcrumbTitle = () => {
@@ -116,10 +114,6 @@ export const BrandLayout: React.FC = () => {
             <span>Marketplace Unified</span>
           </div>
           <div className="brand-footer-desc">NA &amp; EU Region Synced</div>
-          <a href="#support" className="brand-footer-link" onClick={(e) => e.preventDefault()}>
-            <span>Quick Support</span>
-            <span>→</span>
-          </a>
         </div>
       </aside>
 
@@ -146,43 +140,20 @@ export const BrandLayout: React.FC = () => {
           </div>
 
           <div className="brand-topbar-right">
-            {/* Dynamic RBAC Role Simulator for testing all 5 roles on the fly */}
-            <div className="brand-role-simulator" title="Test dynamic RBAC permissions">
-              <span className="brand-simulator-label">
+            {/* Automatically Detected Brand Role Badge */}
+            <div className="brand-role-badge-wrap" title={`Detected Role: ${roleTitle}`}>
+              <span className="brand-role-badge">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                   <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                  <path d="M9 12l2 2 4-4" />
                 </svg>
-                Role:
+                {roleTitle}
               </span>
-              <select
-                className="brand-simulator-select"
-                value={simulatedRole || activeRole}
-                onChange={(e) => setSimulatedRole(e.target.value as BrandRole)}
-              >
-                <option value="BRAND_OWNER">BRAND_OWNER (Full Access)</option>
-                <option value="BRAND_SUPER_ADMIN">BRAND_SUPER_ADMIN (Admin)</option>
-                <option value="BRAND_ADMIN">BRAND_ADMIN (Catalog &amp; Posts)</option>
-                <option value="BRAND_SELLER">BRAND_SELLER (Read-Only)</option>
-                <option value="BRAND_MARKETING_MEMBER">BRAND_MARKETING_MEMBER (Creative)</option>
-              </select>
             </div>
 
-            <div
-              className="brand-topbar-market"
-              onClick={() => setMarketDropdownOpen(!marketDropdownOpen)}
-            >
+            <div className="brand-topbar-market">
               <span>🌐 US Marketplace</span>
-              <span>⌄</span>
             </div>
-
-            <button type="button" className="brand-icon-btn" title="3 Unresolved Alerts">
-              <span>🔔</span>
-              <span className="brand-badge-pill">3</span>
-            </button>
-
-            <button type="button" className="brand-icon-btn" title="Registry Documentation">
-              <span>📖</span>
-            </button>
 
             {/* Current Brand User Profile */}
             <div className="brand-user-card" title={`Logged in as ${roleTitle}`}>

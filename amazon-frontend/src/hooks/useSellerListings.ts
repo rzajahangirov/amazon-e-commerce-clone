@@ -43,8 +43,25 @@ export function useSellerListings(pageSize = 10) {
   );
 
   useEffect(() => {
-    void load();
-  }, [load]);
+    let ignore = false;
+    const run = async () => {
+      try {
+        const payload = await fetchSellerListings(page, pageSize);
+        if (!ignore) setResult(payload);
+      } catch (err) {
+        if (!ignore) {
+          const message =
+            err instanceof ApiError ? err.message : 'Failed to load listings';
+          setError(message);
+          setResult(null);
+        }
+      } finally {
+        if (!ignore) setLoading(false);
+      }
+    };
+    void run();
+    return () => { ignore = true; };
+  }, [page, pageSize]);
 
   return {
     listings: result?.content ?? [],

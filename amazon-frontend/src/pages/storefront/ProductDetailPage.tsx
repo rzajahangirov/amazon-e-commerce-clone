@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { storefrontApi } from '../../api/storefrontApi';
 import type { Product, Review } from '../../api/storefrontTypes';
@@ -31,32 +31,34 @@ export const ProductDetailPage: React.FC = () => {
   const [submittingReview, setSubmittingReview] = useState(false);
   const [reviewError, setReviewError] = useState<string | null>(null);
 
-  const loadData = useCallback(async () => {
-    if (!id) return;
-    try {
-      setLoading(true);
-      const [prod, fbt, revs] = await Promise.all([
-        storefrontApi.getProductById(id),
-        storefrontApi.getFrequentlyBoughtTogether(id).catch(() => []),
-        storefrontApi.getProductReviews(id, 0, 10).catch(() => ({ content: [] })),
-      ]);
-
-      setProduct(prod);
-      setFbtProducts(fbt || []);
-      // Pre-select all FBT items by default
-      setSelectedFbtIds(new Set((fbt || []).map((p) => p.id)));
-      setReviews(revs.content || []);
-    } catch {
-      setProduct(null);
-    } finally {
-      setLoading(false);
-    }
-  }, [id]);
 
   useEffect(() => {
-    loadData();
+    if (!id) return;
+    let ignore = false;
+    const run = async () => {
+      try {
+        setLoading(true);
+        const [prod, fbt, revs] = await Promise.all([
+          storefrontApi.getProductById(id),
+          storefrontApi.getFrequentlyBoughtTogether(id).catch(() => []),
+          storefrontApi.getProductReviews(id, 0, 10).catch(() => ({ content: [] })),
+        ]);
+        if (!ignore) {
+          setProduct(prod);
+          setFbtProducts(fbt || []);
+          setSelectedFbtIds(new Set((fbt || []).map((p) => p.id)));
+          setReviews(revs.content || []);
+        }
+      } catch {
+        if (!ignore) setProduct(null);
+      } finally {
+        if (!ignore) setLoading(false);
+      }
+    };
+    void run();
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [loadData]);
+    return () => { ignore = true; };
+  }, [id]);
 
   if (loading) {
     return (
