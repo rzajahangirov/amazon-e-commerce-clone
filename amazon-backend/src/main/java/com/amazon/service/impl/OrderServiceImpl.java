@@ -52,6 +52,9 @@ public class OrderServiceImpl implements OrderService {
     @Override
     @Transactional
     public ResponseDto<OrderResponseDto> checkoutFromCart(String userEmail, CheckoutRequestDto request) {
+        if (request.getShippingAddressId() == null && request.getShippingAddress() == null) {
+            throw new BusinessRuleException("A shipping address or saved shipping address ID is required");
+        }
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new ResourceNotFoundException(AuthError.USER_NOT_FOUND.getMessage()));
 
@@ -83,6 +86,14 @@ public class OrderServiceImpl implements OrderService {
                 .orderNumber(orderNumber)
                 .user(user)
                 .shippingAddressId(request.getShippingAddressId())
+                .shippingFullName(request.getShippingAddress() != null ? request.getShippingAddress().getFullName().trim() : null)
+                .shippingStreetLine1(request.getShippingAddress() != null ? request.getShippingAddress().getStreetLine1().trim() : null)
+                .shippingStreetLine2(request.getShippingAddress() != null ? trimToNull(request.getShippingAddress().getStreetLine2()) : null)
+                .shippingCity(request.getShippingAddress() != null ? request.getShippingAddress().getCity().trim() : null)
+                .shippingState(request.getShippingAddress() != null ? request.getShippingAddress().getState().trim() : null)
+                .shippingPostalCode(request.getShippingAddress() != null ? request.getShippingAddress().getPostalCode().trim() : null)
+                .shippingCountry(request.getShippingAddress() != null ? request.getShippingAddress().getCountry().trim() : null)
+                .shippingPhone(request.getShippingAddress() != null ? trimToNull(request.getShippingAddress().getPhone()) : null)
                 .status(OrderStatus.PENDING)
                 .totalAmount(BigDecimal.ZERO)
                 .items(new ArrayList<>())
@@ -271,10 +282,23 @@ public class OrderServiceImpl implements OrderService {
                 .userId(order.getUser() != null ? order.getUser().getId() : null)
                 .userEmail(order.getUser() != null ? order.getUser().getEmail() : null)
                 .shippingAddressId(order.getShippingAddressId())
+                .shippingFullName(order.getShippingFullName())
+                .shippingStreetLine1(order.getShippingStreetLine1())
+                .shippingStreetLine2(order.getShippingStreetLine2())
+                .shippingCity(order.getShippingCity())
+                .shippingState(order.getShippingState())
+                .shippingPostalCode(order.getShippingPostalCode())
+                .shippingCountry(order.getShippingCountry())
+                .shippingPhone(order.getShippingPhone())
                 .totalAmount(order.getTotalAmount())
                 .status(order.getStatus())
                 .placedAt(order.getPlacedAt())
                 .items(itemDtos)
                 .build();
+    }
+
+    private String trimToNull(String value) {
+        if (value == null || value.isBlank()) return null;
+        return value.trim();
     }
 }

@@ -25,6 +25,14 @@ public class OrderResponseDto {
     private UUID userId;
     private String userEmail;
     private UUID shippingAddressId;
+    private String shippingFullName;
+    private String shippingStreetLine1;
+    private String shippingStreetLine2;
+    private String shippingCity;
+    private String shippingState;
+    private String shippingPostalCode;
+    private String shippingCountry;
+    private String shippingPhone;
     private BigDecimal totalAmount;
     private OrderStatus status;
     private LocalDateTime placedAt;

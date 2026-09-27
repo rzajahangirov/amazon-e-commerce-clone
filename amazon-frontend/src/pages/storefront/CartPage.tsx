@@ -84,17 +84,16 @@ export const CartPage: React.FC = () => {
                   const itemUnitPrice = item.unitPrice;
                   const itemQuantity = item.quantity;
                   const itemSubtotal = item.subtotal ?? itemUnitPrice * itemQuantity;
+                  const imageUrl = item.productMainImageUrl || item.mainImageUrl;
 
                   return (
                     <div key={itemId} className="cart-item-row">
                       <div className="cart-item-thumb">
-                        <img
-                          src={
-                            item.productMainImageUrl || item.mainImageUrl ||
-                            'https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?w=300&auto=format&fit=crop&q=60'
-                          }
-                          alt={itemTitle}
-                        />
+                        {imageUrl ? (
+                          <img src={imageUrl} alt={itemTitle} />
+                        ) : (
+                          <span role="img" aria-label={`${itemTitle} image unavailable`}>Image unavailable</span>
+                        )}
                       </div>
 
                       <div className="cart-item-info">
@@ -205,16 +204,15 @@ export const CartPage: React.FC = () => {
               <div className="cart-items-list">
                 {savedItems.map((item) => {
                   const itemId = item.id || (item as { listingId: string }).listingId;
+                  const imageUrl = item.productMainImageUrl || item.mainImageUrl;
                   return (
                     <div key={itemId} className="cart-item-row saved">
                       <div className="cart-item-thumb">
-                        <img
-                          src={
-                            item.productMainImageUrl || item.mainImageUrl ||
-                            'https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?w=300&auto=format&fit=crop&q=60'
-                          }
-                          alt={item.productTitle}
-                        />
+                        {imageUrl ? (
+                          <img src={imageUrl} alt={item.productTitle} />
+                        ) : (
+                          <span role="img" aria-label={`${item.productTitle} image unavailable`}>Image unavailable</span>
+                        )}
                       </div>
                       <div className="cart-item-info">
                         <h4 className="cart-item-title">{item.productTitle}</h4>

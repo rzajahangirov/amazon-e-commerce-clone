@@ -44,8 +44,32 @@ public class Order extends BaseEntity {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @Column(name = "shipping_address_id", nullable = false)
+    @Column(name = "shipping_address_id")
     private UUID shippingAddressId;
+
+    @Column(name = "shipping_full_name", length = 120)
+    private String shippingFullName;
+
+    @Column(name = "shipping_street_line1", length = 255)
+    private String shippingStreetLine1;
+
+    @Column(name = "shipping_street_line2", length = 255)
+    private String shippingStreetLine2;
+
+    @Column(name = "shipping_city", length = 100)
+    private String shippingCity;
+
+    @Column(name = "shipping_state", length = 100)
+    private String shippingState;
+
+    @Column(name = "shipping_postal_code", length = 20)
+    private String shippingPostalCode;
+
+    @Column(name = "shipping_country", length = 100)
+    private String shippingCountry;
+
+    @Column(name = "shipping_phone", length = 40)
+    private String shippingPhone;
 
     @Column(name = "total_amount", nullable = false, precision = 10, scale = 2)
     private BigDecimal totalAmount;

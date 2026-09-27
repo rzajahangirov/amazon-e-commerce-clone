@@ -17,11 +17,11 @@ export const CheckoutPage: React.FC = () => {
 
   // Form State
   const [address, setAddress] = useState({
-    fullName: user?.fullName || 'Ericsson Lindqvist',
-    streetLine1: '800 5th Avenue, Suite 4100',
-    city: 'Seattle',
-    state: 'WA',
-    postalCode: '98104',
+    fullName: user?.fullName || '',
+    streetLine1: '',
+    city: '',
+    state: '',
+    postalCode: '',
     country: 'United States',
     phone: '+1 (555) 234-5678',
   });
@@ -60,6 +60,12 @@ export const CheckoutPage: React.FC = () => {
   }
 
   const handlePlaceOrder = async () => {
+    const requiredAddressFields = [address.fullName, address.streetLine1, address.city, address.state, address.postalCode, address.country];
+    if (requiredAddressFields.some((value) => !value.trim())) {
+      setError('Complete all required shipping address fields before placing your order.');
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);
@@ -273,16 +279,15 @@ export const CheckoutPage: React.FC = () => {
                 {activeItems.map((item) => {
                   const itemId = item.id || (item as { listingId: string }).listingId;
                   const itemSubtotal = item.subtotal ?? item.unitPrice * item.quantity;
+                  const imageUrl = item.productMainImageUrl || item.mainImageUrl;
                   return (
                     <div key={itemId} className="chk-item-review-row">
                       <div className="chk-item-thumb">
-                        <img
-                          src={
-                            (item as { mainImageUrl?: string }).mainImageUrl ||
-                            'https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?w=150&auto=format&fit=crop&q=60'
-                          }
-                          alt={item.productTitle}
-                        />
+                        {imageUrl ? (
+                          <img src={imageUrl} alt={item.productTitle} />
+                        ) : (
+                          <span role="img" aria-label={`${item.productTitle} image unavailable`}>Image unavailable</span>
+                        )}
                       </div>
                       <div className="chk-item-desc">
                         <h4>{item.productTitle}</h4>
