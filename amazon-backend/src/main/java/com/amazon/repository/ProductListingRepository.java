@@ -43,5 +43,13 @@ public interface ProductListingRepository extends JpaRepository<ProductListing, 
 
     @Query("SELECT pl.productVariant.product.id, MIN(pl.price) FROM ProductListing pl WHERE pl.productVariant.product.id IN :productIds AND pl.status = com.amazon.enums.ListingStatus.ACTIVE GROUP BY pl.productVariant.product.id")
     List<Object[]> findLowestActivePricesByProductIds(@Param("productIds") java.util.Collection<UUID> productIds);
+
+    @EntityGraph(attributePaths = {"productVariant", "productVariant.product", "seller"})
+    @Query("SELECT pl FROM ProductListing pl WHERE pl.productVariant.product.id = :productId AND pl.status = com.amazon.enums.ListingStatus.ACTIVE ORDER BY pl.isBuyboxWinner DESC, pl.price ASC")
+    List<ProductListing> findActiveListingsByProductIdWithDetails(@Param("productId") UUID productId);
+
+    @EntityGraph(attributePaths = {"productVariant", "productVariant.product", "seller"})
+    @Query("SELECT pl FROM ProductListing pl WHERE pl.productVariant.id = :variantId AND pl.status = com.amazon.enums.ListingStatus.ACTIVE ORDER BY pl.isBuyboxWinner DESC, pl.price ASC")
+    List<ProductListing> findActiveListingsByVariantIdWithDetails(@Param("variantId") UUID variantId);
 }
 

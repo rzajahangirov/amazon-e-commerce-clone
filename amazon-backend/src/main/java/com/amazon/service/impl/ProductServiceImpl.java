@@ -1,5 +1,6 @@
 package com.amazon.service.impl;
 
+import com.amazon.dtos.listing.response.ProductListingResponseDto;
 import com.amazon.dtos.product.request.ProductSearchRequestDto;
 import com.amazon.dtos.product.response.ProductResponseDto;
 import com.amazon.dtos.product.response.ProductVariantResponseDto;
@@ -216,6 +217,24 @@ public class ProductServiceImpl implements ProductService {
                         .asin(v.getAsin())
                         .variantName(v.getVariantName())
                         .variantAttributes(v.getVariantAttributes())
+                        .listings(v.getListings() != null
+                                ? v.getListings().stream().map(l -> ProductListingResponseDto.builder()
+                                        .id(l.getId())
+                                        .productVariantId(v.getId())
+                                        .variantAsin(v.getAsin())
+                                        .variantName(v.getVariantName())
+                                        .sellerId(l.getSeller() != null ? l.getSeller().getId() : null)
+                                        .sellerName(l.getSeller() != null ? l.getSeller().getFullName() : null)
+                                        .sellerSku(l.getSellerSku())
+                                        .price(l.getPrice())
+                                        .minPriceFloor(l.getMinPriceFloor())
+                                        .stockQuantity(l.getStockQuantity())
+                                        .fulfillmentType(l.getFulfillmentType())
+                                        .isBuyboxWinner(l.getIsBuyboxWinner())
+                                        .status(l.getStatus())
+                                        .createdAt(l.getCreatedAt())
+                                        .build()).toList()
+                                : List.of())
                         .createdAt(v.getCreatedAt())
                         .build()).toList()
                 : List.of();

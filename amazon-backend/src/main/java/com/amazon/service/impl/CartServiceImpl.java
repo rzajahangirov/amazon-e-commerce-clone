@@ -61,7 +61,10 @@ public class CartServiceImpl implements CartService {
 
         Cart cart = getOrCreateCart(userEmail);
 
-        ProductListing listing = productListingRepository.findWithDetailsById(request.getListingId())
+        UUID targetId = request.getListingId();
+        ProductListing listing = productListingRepository.findWithDetailsById(targetId)
+                .or(() -> productListingRepository.findActiveListingsByVariantIdWithDetails(targetId).stream().findFirst())
+                .or(() -> productListingRepository.findActiveListingsByProductIdWithDetails(targetId).stream().findFirst())
                 .orElseThrow(() -> new ResourceNotFoundException(CatalogError.LISTING_NOT_FOUND.getMessage()));
 
         if (!listing.isAvailableForPurchase(request.getQuantity())) {

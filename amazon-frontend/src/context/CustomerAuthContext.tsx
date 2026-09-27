@@ -124,7 +124,14 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
           try {
             await storefrontApi.addToCart(item.listingId, item.quantity);
           } catch {
-            // continue syncing others
+            try {
+              const resolved = await resolveListingId(item.listingId, { id: item.productId });
+              if (resolved && resolved !== item.listingId) {
+                await storefrontApi.addToCart(resolved, item.quantity);
+              }
+            } catch {
+              // continue syncing others
+            }
           }
         }
       }
@@ -246,11 +253,63 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
     setWishlistIds(new Set());
   };
 
+  // Helper to resolve an active listing ID from variant or product ID
+  const resolveListingId = async (id: string, details?: Partial<Product>): Promise<string> => {
+    // 1. Check if productDetails has listings directly
+    const directListingId = details?.variants?.[0]?.listings?.[0]?.id;
+    if (directListingId) return directListingId;
+
+    // 2. Try fetching buybox for variant
+    const variantId = details?.variants?.[0]?.id || (id !== details?.id ? id : undefined);
+    if (variantId) {
+      try {
+        const buybox = await storefrontApi.getVariantBuybox(variantId);
+        if (buybox?.id) return buybox.id;
+      } catch {
+        // ignore
+      }
+    }
+
+    // 3. Try fetching product to get variants and buybox
+    const productId = details?.id || id;
+    if (productId) {
+      try {
+        const product = await storefrontApi.getProductById(productId);
+        const vId = product?.variants?.[0]?.id;
+        if (vId) {
+          const buybox = await storefrontApi.getVariantBuybox(vId);
+          if (buybox?.id) return buybox.id;
+        }
+      } catch {
+        // ignore
+      }
+    }
+
+    return id;
+  };
+
   // Add to cart (Guest vs Auth)
   const addToCart = async (listingId: string, quantity: number = 1, productDetails?: Partial<Product>) => {
     if (isAuthenticated) {
-      const updated = await storefrontApi.addToCart(listingId, quantity);
-      setServerCart(updated);
+      let targetListingId = listingId;
+      try {
+        const updated = await storefrontApi.addToCart(targetListingId, quantity);
+        setServerCart(updated);
+      } catch (err) {
+        // Fallback: If listing was not found, resolve the actual buybox listing ID
+        try {
+          const resolved = await resolveListingId(listingId, productDetails);
+          if (resolved && resolved !== listingId) {
+            targetListingId = resolved;
+            const updated = await storefrontApi.addToCart(targetListingId, quantity);
+            setServerCart(updated);
+            return;
+          }
+        } catch {
+          // ignore
+        }
+        throw err;
+      }
     } else {
       setGuestCart((prev) => {
         const existingIdx = prev.findIndex((i) => i.listingId === listingId);

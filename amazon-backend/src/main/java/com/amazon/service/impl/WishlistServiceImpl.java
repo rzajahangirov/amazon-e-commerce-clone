@@ -127,15 +127,21 @@ public class WishlistServiceImpl implements WishlistService {
 
     private WishlistItemResponseDto mapToResponseDto(WishlistItem item) {
         Product product = item.getProduct();
+        String imageUrl = product.getMainImageUrl();
+
         return WishlistItemResponseDto.builder()
                 .wishlistItemId(item.getId())
                 .productId(product.getId())
                 .productTitle(product.getTitle())
                 .productDescription(product.getDescription())
                 .basePrice(product.getBasePrice())
+                .productBasePrice(product.getBasePrice())
+                .productMainImageUrl(imageUrl)
+                .mainImageUrl(imageUrl)
                 .brandName(product.getBrand() != null ? product.getBrand().getName() : null)
                 .categoryName(product.getCategory() != null ? product.getCategory().getName() : null)
                 .averageRating(product.getAverageRating() != null ? product.getAverageRating() : 0.0)
+                .productAverageRating(product.getAverageRating() != null ? product.getAverageRating() : 0.0)
                 .totalReviews(product.getTotalReviews() != null ? product.getTotalReviews() : 0)
                 .addedAt(item.getCreatedAt())
                 .build();

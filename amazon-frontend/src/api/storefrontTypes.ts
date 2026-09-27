@@ -147,12 +147,17 @@ export interface Category {
 }
 
 export interface WishlistItem {
-  id: string;
+  id?: string;
+  wishlistItemId?: string;
   productId: string;
   productTitle: string;
-  productMainImageUrl: string | null;
-  productBasePrice: number | null;
-  productAverageRating: number;
+  productMainImageUrl?: string | null;
+  mainImageUrl?: string | null;
+  productBasePrice?: number | null;
+  basePrice?: number | null;
+  productAverageRating?: number;
+  averageRating?: number;
+  listingId?: string | null;
   addedAt: string;
 }
 

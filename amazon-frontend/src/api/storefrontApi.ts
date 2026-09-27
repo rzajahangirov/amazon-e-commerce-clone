@@ -8,6 +8,7 @@ import type {
   CreateReviewRequest,
   Order,
   Product,
+  ProductListingDto,
   ProductSearchParams,
   Review,
   WishlistItem,
@@ -36,6 +37,14 @@ export const storefrontApi = {
 
   async getFrequentlyBoughtTogether(id: string): Promise<Product[]> {
     return apiGet<Product[]>(`/products/${id}/frequently-bought-together`);
+  },
+
+  async getVariantBuybox(variantId: string): Promise<ProductListingDto> {
+    return apiGet<ProductListingDto>(`/products/variants/${variantId}/buybox`);
+  },
+
+  async getVariantListings(variantId: string): Promise<ProductListingDto[]> {
+    return apiGet<ProductListingDto[]>(`/products/variants/${variantId}/listings`);
   },
 
   // ── Categories ───────────────────────────────────────────────

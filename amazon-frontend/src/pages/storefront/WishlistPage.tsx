@@ -12,18 +12,63 @@ export const WishlistPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [actioningId, setActioningId] = useState<string | null>(null);
 
+  // Helper to ensure each wishlist item displays its true product image and details
+  const enrichWishlistItems = useCallback(async (rawItems: WishlistItem[]): Promise<WishlistItem[]> => {
+    const promises = rawItems.map(async (item) => {
+      const existingImage = item.productMainImageUrl || item.mainImageUrl;
+      const existingPrice = item.productBasePrice ?? item.basePrice;
+      const existingRating = item.productAverageRating ?? item.averageRating;
+      const itemId = item.id || item.wishlistItemId || item.productId;
+
+      if (existingImage && existingPrice != null && existingRating != null) {
+        return {
+          ...item,
+          id: itemId,
+          productMainImageUrl: existingImage,
+          productBasePrice: existingPrice,
+          productAverageRating: existingRating,
+        };
+      }
+
+      // Fetch authentic product details to display the real image and metadata
+      try {
+        const prod = await storefrontApi.getProductById(item.productId);
+        return {
+          ...item,
+          id: itemId,
+          productMainImageUrl: prod.mainImageUrl || existingImage || null,
+          productBasePrice: prod.buyBoxPrice ?? prod.basePrice ?? existingPrice ?? 0,
+          productAverageRating: prod.averageRating ?? existingRating ?? 4.8,
+          listingId: prod.variants?.[0]?.listings?.[0]?.id || item.listingId || null,
+        };
+      } catch {
+        return {
+          ...item,
+          id: itemId,
+          productMainImageUrl: existingImage || null,
+          productBasePrice: existingPrice ?? 0,
+          productAverageRating: existingRating ?? 4.8,
+        };
+      }
+    });
+
+    return Promise.all(promises);
+  }, []);
+
   const fetchWishlist = useCallback(async () => {
     if (!isAuthenticated) return;
     try {
       setLoading(true);
       const res = await storefrontApi.getWishlist(0, 50);
-      setItems(res.content || []);
+      const raw = res.content || [];
+      const enriched = await enrichWishlistItems(raw);
+      setItems(enriched);
     } catch {
       setItems([]);
     } finally {
       setLoading(false);
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, enrichWishlistItems]);
 
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -31,7 +76,9 @@ export const WishlistPage: React.FC = () => {
     const run = async () => {
       try {
         const res = await storefrontApi.getWishlist(0, 50);
-        if (!ignore) setItems(res.content || []);
+        const raw = res.content || [];
+        const enriched = await enrichWishlistItems(raw);
+        if (!ignore) setItems(enriched);
       } catch {
         if (!ignore) setItems([]);
       } finally {
@@ -40,7 +87,7 @@ export const WishlistPage: React.FC = () => {
     };
     void run();
     return () => { ignore = true; };
-  }, [isAuthenticated]);
+  }, [isAuthenticated, enrichWishlistItems]);
 
   const handleRemove = async (productId: string) => {
     try {
@@ -56,11 +103,12 @@ export const WishlistPage: React.FC = () => {
   const handleMoveToCart = async (item: WishlistItem) => {
     try {
       setActioningId(item.productId);
-      await addToCart(item.productId, 1, {
+      const targetListingId = item.listingId || item.productId;
+      await addToCart(targetListingId, 1, {
         id: item.productId,
         title: item.productTitle,
-        buyBoxPrice: item.productBasePrice,
-        mainImageUrl: item.productMainImageUrl,
+        buyBoxPrice: item.productBasePrice ?? item.basePrice ?? 0,
+        mainImageUrl: item.productMainImageUrl || item.mainImageUrl,
       });
       await storefrontApi.removeFromWishlist(item.productId);
       await fetchWishlist();
@@ -107,56 +155,63 @@ export const WishlistPage: React.FC = () => {
         </div>
       ) : (
         <div className="wl-grid">
-          {items.map((item) => (
-            <div key={item.id} className="wl-card">
-              <Link to={`/products/${item.productId}`} className="wl-thumb-link">
-                <img
-                  src={
-                    item.productMainImageUrl ||
-                    'https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?w=300&auto=format&fit=crop&q=60'
-                  }
-                  alt={item.productTitle}
-                />
-              </Link>
+          {items.map((item) => {
+            const displayImage =
+              item.productMainImageUrl ||
+              item.mainImageUrl ||
+              'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&auto=format&fit=crop&q=80';
+            const displayPrice = item.productBasePrice ?? item.basePrice ?? 0;
+            const displayRating = item.productAverageRating ?? item.averageRating ?? 4.8;
+            const itemId = item.id || item.wishlistItemId || item.productId;
 
-              <div className="wl-info">
-                <Link to={`/products/${item.productId}`} className="wl-item-title">
-                  {item.productTitle}
+            return (
+              <div key={itemId} className="wl-card">
+                <Link to={`/products/${item.productId}`} className="wl-thumb-link">
+                  <img
+                    src={displayImage}
+                    alt={item.productTitle}
+                  />
                 </Link>
 
-                <div className="wl-rating">
-                  <RatingStars rating={item.productAverageRating || 4.8} size="sm" />
-                </div>
+                <div className="wl-info">
+                  <Link to={`/products/${item.productId}`} className="wl-item-title">
+                    {item.productTitle}
+                  </Link>
 
-                <div className="wl-price">
-                  ${(item.productBasePrice ?? 0).toFixed(2)}
-                </div>
+                  <div className="wl-rating">
+                    <RatingStars rating={displayRating} size="sm" />
+                  </div>
 
-                <div className="wl-added-date">
-                  Added on {new Date(item.addedAt).toLocaleDateString()}
-                </div>
+                  <div className="wl-price">
+                    ${displayPrice.toFixed(2)}
+                  </div>
 
-                <div className="wl-actions">
-                  <button
-                    type="button"
-                    onClick={() => handleMoveToCart(item)}
-                    disabled={actioningId === item.productId}
-                    className="wl-btn add"
-                  >
-                    Move to Cart
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleRemove(item.productId)}
-                    disabled={actioningId === item.productId}
-                    className="wl-btn remove"
-                  >
-                    Remove
-                  </button>
+                  <div className="wl-added-date">
+                    Added on {new Date(item.addedAt).toLocaleDateString()}
+                  </div>
+
+                  <div className="wl-actions">
+                    <button
+                      type="button"
+                      onClick={() => handleMoveToCart(item)}
+                      disabled={actioningId === item.productId}
+                      className="wl-btn add"
+                    >
+                      Move to Cart
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleRemove(item.productId)}
+                      disabled={actioningId === item.productId}
+                      className="wl-btn remove"
+                    >
+                      Remove
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

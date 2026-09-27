@@ -25,10 +25,16 @@ public class WishlistItemResponseDto {
     private String productTitle;
     private String productDescription;
     private BigDecimal basePrice;
+    private BigDecimal productBasePrice;
+    private String productMainImageUrl;
+    private String mainImageUrl;
+    private UUID listingId;
     private String brandName;
     private String categoryName;
     @Builder.Default
     private Double averageRating = 0.0;
+    @Builder.Default
+    private Double productAverageRating = 0.0;
     @Builder.Default
     private Integer totalReviews = 0;
     private LocalDateTime addedAt;
