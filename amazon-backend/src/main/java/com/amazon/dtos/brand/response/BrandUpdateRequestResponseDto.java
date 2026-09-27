@@ -27,6 +27,7 @@ public class BrandUpdateRequestResponseDto {
     private String proposedLogoUrl;
     private String proposedAboutText;
     private String proposedTrademarkNo;
+    private String officialLegalJustification;
     private BrandUpdateRequestStatus status;
     private String rejectionReason;
     private LocalDateTime createdAt;

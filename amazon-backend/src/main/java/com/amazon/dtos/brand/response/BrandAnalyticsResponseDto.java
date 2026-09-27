@@ -24,6 +24,8 @@ public class BrandAnalyticsResponseDto {
     private Long totalBrandPosts;
     private BigDecimal totalBrandRevenue;
     private Long totalUnitsSold;
+    private Long unauthorizedSellerAlertsCount;
+    private Long pendingCatalogCount;
     private List<TopSellingProductDto> topSellingProducts;
 
     @Data

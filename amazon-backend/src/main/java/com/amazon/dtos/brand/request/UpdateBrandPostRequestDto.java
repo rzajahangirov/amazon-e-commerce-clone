@@ -17,4 +17,10 @@ public class UpdateBrandPostRequestDto {
     private String imageUrl;
 
     private String caption;
+
+    private String linkedAsin;
+
+    private Long reachCount;
+
+    private Long likesCount;
 }

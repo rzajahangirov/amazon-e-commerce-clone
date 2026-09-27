@@ -1,5 +1,6 @@
 package com.amazon.dtos.brand.request;
 
+import com.amazon.enums.GovernanceStatus;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -23,4 +24,9 @@ public class UpdateBrandProductRequestDto {
     private String description;
 
     private UUID categoryId;
+
+    @Size(max = 100, message = "Master SKU must not exceed 100 characters")
+    private String masterSku;
+
+    private GovernanceStatus governanceStatus;
 }

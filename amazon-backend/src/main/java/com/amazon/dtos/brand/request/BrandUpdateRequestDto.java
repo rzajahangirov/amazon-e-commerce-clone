@@ -8,12 +8,13 @@ import lombok.NoArgsConstructor;
 
 /**
  * Request DTO for submitting proposed brand metadata modifications.
+ * Alias / Enterprise standard DTO for brand update requests.
  */
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class CreateBrandUpdateRequestDto {
+public class BrandUpdateRequestDto {
 
     @Size(min = 2, max = 150, message = "Proposed brand name must be between 2 and 150 characters")
     private String proposedBrandName;

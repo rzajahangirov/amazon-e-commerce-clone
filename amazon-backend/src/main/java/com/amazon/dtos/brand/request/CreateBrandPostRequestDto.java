@@ -19,4 +19,12 @@ public class CreateBrandPostRequestDto {
     private String imageUrl;
 
     private String caption;
+
+    private String linkedAsin;
+
+    @Builder.Default
+    private Long reachCount = 0L;
+
+    @Builder.Default
+    private Long likesCount = 0L;
 }

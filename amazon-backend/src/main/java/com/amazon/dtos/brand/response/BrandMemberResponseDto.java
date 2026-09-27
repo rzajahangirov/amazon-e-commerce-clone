@@ -25,5 +25,6 @@ public class BrandMemberResponseDto {
     private String userFullName;
     private String userEmail;
     private BrandRole brandRole;
+    private String department;
     private LocalDateTime assignedAt;
 }

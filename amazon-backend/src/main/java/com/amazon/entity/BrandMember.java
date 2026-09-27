@@ -45,6 +45,9 @@ public class BrandMember extends BaseEntity {
     @Column(name = "brand_role", nullable = false, length = 30)
     private BrandRole brandRole;
 
+    @Column(name = "department", length = 100)
+    private String department;
+
     @Column(name = "assigned_at")
     @Builder.Default
     private LocalDateTime assignedAt = LocalDateTime.now();

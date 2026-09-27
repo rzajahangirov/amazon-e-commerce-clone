@@ -12,12 +12,13 @@ import lombok.NoArgsConstructor;
 
 /**
  * Request DTO for creating an employee account and adding them to the brand organization.
+ * Alias / Enterprise standard DTO for brand member creation.
  */
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class AddBrandMemberRequestDto {
+public class CreateBrandMemberRequestDto {
 
     @NotBlank(message = "Full name is required")
     @Size(min = 2, max = 150, message = "Full name must be between 2 and 150 characters")

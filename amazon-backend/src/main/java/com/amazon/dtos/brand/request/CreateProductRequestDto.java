@@ -1,20 +1,25 @@
 package com.amazon.dtos.brand.request;
 
 import com.amazon.enums.GovernanceStatus;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
 import java.util.UUID;
 
+/**
+ * Enterprise standard request DTO for creating brand catalog products.
+ */
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class CreateBrandCatalogProductRequestDto {
+public class CreateProductRequestDto {
+
     @NotNull(message = "Category ID is required")
     private UUID categoryId;
 

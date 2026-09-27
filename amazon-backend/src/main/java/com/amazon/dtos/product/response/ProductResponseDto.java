@@ -1,5 +1,6 @@
 package com.amazon.dtos.product.response;
 
+import com.amazon.enums.GovernanceStatus;
 import com.amazon.enums.ProductStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -28,6 +29,8 @@ public class ProductResponseDto {
     private UUID categoryId;
     private String categoryName;
     private String title;
+    private String masterSku;
+    private GovernanceStatus governanceStatus;
     private String description;
     private BigDecimal basePrice;
     private ProductStatus status;

@@ -52,6 +52,9 @@ public class BrandUpdateRequest extends BaseEntity {
     @Column(name = "proposed_trademark_no", length = 100)
     private String proposedTrademarkNo;
 
+    @Column(name = "official_legal_justification", length = 500)
+    private String officialLegalJustification;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     @Builder.Default

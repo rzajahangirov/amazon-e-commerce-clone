@@ -1,5 +1,6 @@
 package com.amazon.entity;
 
+import com.amazon.enums.GovernanceStatus;
 import com.amazon.enums.ProductStatus;
 import jakarta.persistence.*;
 import lombok.*;
@@ -51,6 +52,14 @@ public class Product extends BaseEntity {
 
     @Column(nullable = false)
     private String title;
+
+    @Column(name = "master_sku", length = 100)
+    private String masterSku;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "governance_status", length = 30)
+    @Builder.Default
+    private GovernanceStatus governanceStatus = GovernanceStatus.DRAFT;
 
     @Column(columnDefinition = "TEXT")
     private String description;

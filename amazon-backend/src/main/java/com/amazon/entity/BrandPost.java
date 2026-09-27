@@ -45,6 +45,17 @@ public class BrandPost extends BaseEntity {
     @Column(columnDefinition = "TEXT")
     private String caption;
 
+    @Column(name = "linked_asin", length = 50)
+    private String linkedAsin;
+
+    @Column(name = "reach_count", nullable = false)
+    @Builder.Default
+    private Long reachCount = 0L;
+
+    @Column(name = "likes_count", nullable = false)
+    @Builder.Default
+    private Long likesCount = 0L;
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

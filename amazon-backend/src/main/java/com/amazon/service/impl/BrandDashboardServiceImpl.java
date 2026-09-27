@@ -142,6 +142,7 @@ public class BrandDashboardServiceImpl implements BrandDashboardService {
                 .proposedLogoUrl(request.getProposedLogoUrl())
                 .proposedAboutText(request.getProposedAboutText())
                 .proposedTrademarkNo(request.getProposedTrademarkNo())
+                .officialLegalJustification(request.getOfficialLegalJustification())
                 .status(BrandUpdateRequestStatus.PENDING)
                 .build();
 
@@ -219,6 +220,7 @@ public class BrandDashboardServiceImpl implements BrandDashboardService {
                 .brand(callerMember.getBrand())
                 .user(savedEmployee)
                 .brandRole(request.getBrandRole())
+                .department(request.getDepartment())
                 .assignedAt(LocalDateTime.now())
                 .build();
 
@@ -321,6 +323,8 @@ public class BrandDashboardServiceImpl implements BrandDashboardService {
                 .category(category)
                 .title(request.getTitle().trim())
                 .description(request.getDescription())
+                .masterSku(request.getMasterSku())
+                .governanceStatus(request.getGovernanceStatus() != null ? request.getGovernanceStatus() : GovernanceStatus.ACTIVE_LOCKED)
                 .status(ProductStatus.ACTIVE)
                 .build();
         Product savedProduct = productRepository.save(product);
@@ -368,6 +372,13 @@ public class BrandDashboardServiceImpl implements BrandDashboardService {
                 throw new BusinessRuleException(CatalogError.CATEGORY_NOT_APPROVED.getMessage());
             }
             product.setCategory(category);
+        }
+
+        if (request.getMasterSku() != null) {
+            product.setMasterSku(request.getMasterSku());
+        }
+        if (request.getGovernanceStatus() != null) {
+            product.setGovernanceStatus(request.getGovernanceStatus());
         }
 
         Product updated = productRepository.save(product);
@@ -447,6 +458,9 @@ public class BrandDashboardServiceImpl implements BrandDashboardService {
                 .authorUser(callerMember.getUser())
                 .imageUrl(request.getImageUrl())
                 .caption(request.getCaption())
+                .linkedAsin(request.getLinkedAsin())
+                .reachCount(request.getReachCount() != null ? request.getReachCount() : 0L)
+                .likesCount(request.getLikesCount() != null ? request.getLikesCount() : 0L)
                 .build();
 
         BrandPost saved = brandPostRepository.save(post);
@@ -472,6 +486,15 @@ public class BrandDashboardServiceImpl implements BrandDashboardService {
         }
         if (request.getCaption() != null) {
             post.setCaption(request.getCaption());
+        }
+        if (request.getLinkedAsin() != null) {
+            post.setLinkedAsin(request.getLinkedAsin().isBlank() ? null : request.getLinkedAsin());
+        }
+        if (request.getReachCount() != null) {
+            post.setReachCount(request.getReachCount());
+        }
+        if (request.getLikesCount() != null) {
+            post.setLikesCount(request.getLikesCount());
         }
 
         BrandPost updated = brandPostRepository.save(post);
@@ -574,6 +597,20 @@ public class BrandDashboardServiceImpl implements BrandDashboardService {
                 .limit(10)
                 .toList();
 
+        // Unauthorized seller alerts: count listings by sellers who are NOT members of this brand
+        java.util.Set<UUID> brandMemberUserIds = brandMemberRepository.findByBrandId(brandId).stream()
+                .map(bm -> bm.getUser().getId())
+                .collect(java.util.stream.Collectors.toSet());
+        long unauthorizedSellerAlerts = brandListings.stream()
+                .filter(l -> l.getSeller() != null && !brandMemberUserIds.contains(l.getSeller().getId()))
+                .count();
+
+        // Pending catalog: products in DRAFT or UNDER_REVIEW governance status
+        long pendingCatalog = brandProducts.stream()
+                .filter(p -> p.getGovernanceStatus() == com.amazon.enums.GovernanceStatus.DRAFT
+                        || p.getGovernanceStatus() == com.amazon.enums.GovernanceStatus.UNDER_REVIEW)
+                .count();
+
         BrandAnalyticsResponseDto analytics = BrandAnalyticsResponseDto.builder()
                 .totalBrandProducts(totalProducts)
                 .totalBrandVariants(totalVariants)
@@ -582,6 +619,8 @@ public class BrandDashboardServiceImpl implements BrandDashboardService {
                 .totalBrandPosts(totalBrandPosts)
                 .totalBrandRevenue(totalRevenue)
                 .totalUnitsSold(totalUnitsSold)
+                .unauthorizedSellerAlertsCount(unauthorizedSellerAlerts)
+                .pendingCatalogCount(pendingCatalog)
                 .topSellingProducts(topSellingProducts)
                 .build();
 
@@ -665,6 +704,7 @@ public class BrandDashboardServiceImpl implements BrandDashboardService {
                 .userFullName(m.getUser().getFullName())
                 .userEmail(m.getUser().getEmail())
                 .brandRole(m.getBrandRole())
+                .department(m.getDepartment())
                 .assignedAt(m.getAssignedAt())
                 .build();
     }
@@ -680,6 +720,7 @@ public class BrandDashboardServiceImpl implements BrandDashboardService {
                 .proposedLogoUrl(req.getProposedLogoUrl())
                 .proposedAboutText(req.getProposedAboutText())
                 .proposedTrademarkNo(req.getProposedTrademarkNo())
+                .officialLegalJustification(req.getOfficialLegalJustification())
                 .status(req.getStatus())
                 .rejectionReason(req.getRejectionReason())
                 .createdAt(req.getCreatedAt())
@@ -696,6 +737,9 @@ public class BrandDashboardServiceImpl implements BrandDashboardService {
                 .authorName(post.getAuthorUser().getFullName())
                 .imageUrl(post.getImageUrl())
                 .caption(post.getCaption())
+                .linkedAsin(post.getLinkedAsin())
+                .reachCount(post.getReachCount())
+                .likesCount(post.getLikesCount())
                 .createdAt(post.getCreatedAt())
                 .updatedAt(post.getUpdatedAt())
                 .build();
@@ -726,6 +770,8 @@ public class BrandDashboardServiceImpl implements BrandDashboardService {
                 .basePrice(product.getBasePrice())
                 .status(product.getStatus())
                 .variants(variantDtos)
+                .masterSku(product.getMasterSku())
+                .governanceStatus(product.getGovernanceStatus())
                 .averageRating(product.getAverageRating() != null ? product.getAverageRating() : 0.0)
                 .totalReviews(product.getTotalReviews() != null ? product.getTotalReviews() : 0)
                 .createdAt(product.getCreatedAt())
