@@ -1,0 +1,14 @@
+target/
+build/
+.git/
+.gitignore
+.mvn/
+mvnw
+mvnw.cmd
+.gradle/
+.idea/
+*.iml
+.env
+.env.*
+*.log
+uploads/
