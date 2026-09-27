@@ -45,9 +45,15 @@ export const AuthModal: React.FC = () => {
     }
   };
 
-  const handleDemoFill = () => {
-    setEmail('customer1@example.com');
+  const handleDemoFill = (role: 'customer' | 'brand' | 'admin' = 'customer') => {
     setPassword('Password123!');
+    if (role === 'brand') {
+      setEmail('nike.owner@test.com');
+    } else if (role === 'admin') {
+      setEmail('admin@amazon-platform.com');
+    } else {
+      setEmail('customer1@test.com');
+    }
   };
 
   return (
@@ -266,23 +272,63 @@ export const AuthModal: React.FC = () => {
 
           {/* Quick Demo Fill */}
           {isSignIn && (
-            <div style={{ marginBottom: '16px', textAlign: 'center' }}>
-              <button
-                type="button"
-                onClick={handleDemoFill}
-                style={{
-                  background: 'none',
-                  border: '1px dashed #007185',
-                  color: '#007185',
-                  padding: '6px 12px',
-                  borderRadius: '4px',
-                  fontSize: '0.78rem',
-                  cursor: 'pointer',
-                  fontWeight: 600,
-                }}
-              >
-                Auto-fill Demo Customer Credentials
-              </button>
+            <div style={{ marginBottom: '16px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <div style={{ fontSize: '0.72rem', color: '#565959', fontWeight: 600, textAlign: 'center' }}>
+                Quick Test Credentials:
+              </div>
+              <div style={{ display: 'flex', gap: '6px', justifyContent: 'center', flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  onClick={() => handleDemoFill('customer')}
+                  style={{
+                    background: 'none',
+                    border: '1px dashed #007185',
+                    color: '#007185',
+                    padding: '4px 8px',
+                    borderRadius: '4px',
+                    fontSize: '0.74rem',
+                    cursor: 'pointer',
+                    fontWeight: 600,
+                  }}
+                  title="customer1@test.com"
+                >
+                  Customer
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleDemoFill('brand')}
+                  style={{
+                    background: 'none',
+                    border: '1px dashed #2563eb',
+                    color: '#2563eb',
+                    padding: '4px 8px',
+                    borderRadius: '4px',
+                    fontSize: '0.74rem',
+                    cursor: 'pointer',
+                    fontWeight: 600,
+                  }}
+                  title="nike.owner@test.com"
+                >
+                  Nike Brand Owner
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleDemoFill('admin')}
+                  style={{
+                    background: 'none',
+                    border: '1px dashed #7c3aed',
+                    color: '#7c3aed',
+                    padding: '4px 8px',
+                    borderRadius: '4px',
+                    fontSize: '0.74rem',
+                    cursor: 'pointer',
+                    fontWeight: 600,
+                  }}
+                  title="admin@amazon-platform.com"
+                >
+                  Admin
+                </button>
+              </div>
             </div>
           )}
 

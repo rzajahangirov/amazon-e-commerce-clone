@@ -1,5 +1,6 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useCustomerAuth } from '../../context/CustomerAuthContext';
+import { userInitials as formatUserInitials } from '../../utils/format';
 import './SellerLayout.css';
 
 interface NavItem {
@@ -46,12 +47,7 @@ export function SellerLayout() {
 
   // Dynamic user data from auth context
   const displayName = user?.fullName || user?.email?.split('@')?.[0] || 'Merchant';
-  const userInitials = displayName
-    .split(' ')
-    .map((n: string) => n[0])
-    .join('')
-    .slice(0, 2)
-    .toUpperCase();
+  const displayInitials = formatUserInitials(displayName);
   const userRole = user?.role === 'ROLE_ADMIN' ? 'Platform Admin' : 'Merchant Ops';
 
   const handleLogout = () => {
@@ -129,7 +125,7 @@ export function SellerLayout() {
             <span className="seller-market-badge">US Marketplace (USD $)</span>
           </div>
           <div className="seller-topbar-user">
-            <span className="seller-user-avatar">{userInitials}</span>
+            <span className="seller-user-avatar">{displayInitials}</span>
             <div className="seller-user-info">
               <strong>{displayName}</strong>
               <small>{userRole}</small>

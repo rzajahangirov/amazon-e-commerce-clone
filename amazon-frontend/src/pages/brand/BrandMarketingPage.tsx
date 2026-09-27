@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { brandApi } from '../../api/brandApi';
 import type { BrandPostResponseDto, CreateBrandPostRequestDto } from '../../api/brandTypes';
 import { useBrandRBAC } from '../../hooks/useBrandRBAC';
+import { userInitials } from '../../utils/format';
 import '../../components/brand/BrandCommon.css';
 
 export const BrandMarketingPage: React.FC = () => {
@@ -333,13 +334,7 @@ export const BrandMarketingPage: React.FC = () => {
                       fontWeight: 700,
                     }}
                   >
-                    {post.authorName
-                      ? post.authorName
-                          .split(' ')
-                          .map((n) => n[0])
-                          .join('')
-                          .slice(0, 2)
-                      : 'SJ'}
+                    {userInitials(post.authorName || 'SJ')}
                   </div>
                   <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#334155' }}>
                     {post.authorName || 'Sarah Jenkins'}

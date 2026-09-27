@@ -6,7 +6,7 @@ export function useBrandRBAC() {
     useBrandAuth();
 
   const hasAnyRole = (roles: BrandRole[]): boolean => {
-    return roles.includes(activeRole);
+    return activeRole !== null && roles.includes(activeRole);
   };
 
   const hasRole = (role: BrandRole): boolean => {
@@ -38,7 +38,7 @@ export function useBrandRBAC() {
     currentMember,
     hasAnyRole,
     hasRole,
-    roleTitle: roleNameDisplay[activeRole] || activeRole,
-    roleTier: roleTierDisplay[activeRole] || 'Standard Access',
+    roleTitle: activeRole ? (roleNameDisplay[activeRole] || activeRole) : 'No Role',
+    roleTier: activeRole ? (roleTierDisplay[activeRole] || 'Standard Access') : 'Standard Access',
   };
 }

@@ -24,7 +24,7 @@ export const BrandRouteGuard: React.FC<BrandRouteGuardProps> = ({
     );
   }
 
-  if (!allowedRoles.includes(activeRole)) {
+  if (!activeRole || !allowedRoles.includes(activeRole)) {
     return <Navigate to={fallbackPath} replace />;
   }
 

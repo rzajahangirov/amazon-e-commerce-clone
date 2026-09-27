@@ -2,6 +2,7 @@ import React from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useBrandRBAC } from '../../hooks/useBrandRBAC';
 import { useCustomerAuth } from '../../context/CustomerAuthContext';
+import { userInitials } from '../../utils/format';
 import './BrandLayout.css';
 
 export const BrandLayout: React.FC = () => {
@@ -12,12 +13,7 @@ export const BrandLayout: React.FC = () => {
 
   // Dynamic user data — prefer brand profile owner, fall back to logged-in customer
   const ownerName = profile?.brand?.ownerName || user?.fullName || user?.email?.split('@')?.[0] || 'Brand Member';
-  const ownerInitials = ownerName
-    .split(' ')
-    .map((n: string) => n[0])
-    .join('')
-    .slice(0, 2)
-    .toUpperCase();
+  const ownerInitials = userInitials(ownerName);
 
   const handleLogout = () => {
     logout();

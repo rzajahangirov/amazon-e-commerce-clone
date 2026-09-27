@@ -188,9 +188,13 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
     localStorage.setItem(CUSTOMER_USER_KEY, JSON.stringify(userData));
 
     // Automatically synchronize guest cart to server
-    await syncGuestCart();
-    await refreshCart();
-    await refreshWishlist();
+    try {
+      await syncGuestCart();
+      await refreshCart();
+      await refreshWishlist();
+    } catch {
+      // ignore non-critical sync errors
+    }
     closeAuthModal();
   };
 
@@ -223,9 +227,13 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
     localStorage.setItem(CUSTOMER_USER_KEY, JSON.stringify(userData));
 
     // Automatically synchronize guest cart to server
-    await syncGuestCart();
-    await refreshCart();
-    await refreshWishlist();
+    try {
+      await syncGuestCart();
+      await refreshCart();
+      await refreshWishlist();
+    } catch {
+      // ignore non-critical sync errors
+    }
     closeAuthModal();
   };
 

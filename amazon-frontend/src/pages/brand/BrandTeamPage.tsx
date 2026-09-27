@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { brandApi } from '../../api/brandApi';
 import type { AddBrandMemberRequestDto, BrandMemberResponseDto, BrandRole } from '../../api/brandTypes';
 import { useBrandRBAC } from '../../hooks/useBrandRBAC';
+import { userInitials } from '../../utils/format';
 import '../../components/brand/BrandCommon.css';
 
 export const BrandTeamPage: React.FC = () => {
@@ -315,11 +316,7 @@ export const BrandTeamPage: React.FC = () => {
                           fontSize: '0.85rem',
                         }}
                       >
-                        {(m.userFullName || 'Member')
-                          .split(' ')
-                          .map((n) => n[0])
-                          .join('')
-                          .slice(0, 2)}
+                        {userInitials(m.userFullName || 'Member')}
                       </div>
                       <div>
                         <div style={{ fontWeight: 700, color: '#0f172a' }}>{m.userFullName}</div>
