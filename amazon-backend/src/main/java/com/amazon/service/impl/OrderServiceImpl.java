@@ -85,7 +85,12 @@ public class OrderServiceImpl implements OrderService {
         Order order = Order.builder()
                 .orderNumber(orderNumber)
                 .user(user)
-                .shippingAddressId(request.getShippingAddressId())
+                // Existing production databases keep this legacy column NOT NULL.
+                // Inline demo addresses have no saved-address record, so assign a
+                // per-order reference while persisting the actual address snapshot below.
+                .shippingAddressId(request.getShippingAddressId() != null
+                        ? request.getShippingAddressId()
+                        : UUID.randomUUID())
                 .shippingFullName(request.getShippingAddress() != null ? request.getShippingAddress().getFullName().trim() : null)
                 .shippingStreetLine1(request.getShippingAddress() != null ? request.getShippingAddress().getStreetLine1().trim() : null)
                 .shippingStreetLine2(request.getShippingAddress() != null ? trimToNull(request.getShippingAddress().getStreetLine2()) : null)
