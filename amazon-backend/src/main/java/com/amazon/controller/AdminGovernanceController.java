@@ -9,9 +9,12 @@ import com.amazon.payloads.ResponseDto;
 import com.amazon.service.AdminGovernanceService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDate;
 import java.util.UUID;
 
 @RestController
@@ -55,10 +58,15 @@ public class AdminGovernanceController {
 
     @GetMapping("/v1/api/admin/orders")
     public ResponseEntity<ResponseDto<PaginationPayload<AdminOrderResponseDto>>> getOrders(
-            @RequestParam(required = false) OrderStatus status, @RequestParam(required = false) UUID sellerId,
-            @RequestParam(required = false) UUID buyerId, @RequestParam(required = false) String orderNumber,
-            @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size) {
-        return ResponseEntity.ok(adminService.getOrders(status, sellerId, buyerId, orderNumber, page, size));
+            @RequestParam(required = false) OrderStatus status,
+            @RequestParam(required = false) UUID sellerId,
+            @RequestParam(required = false) UUID buyerId,
+            @RequestParam(required = false) String orderNumber,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        return ResponseEntity.ok(adminService.getOrders(status, sellerId, buyerId, orderNumber, startDate, endDate, page, size));
     }
 
     @PutMapping("/v1/api/admin/orders/{id}/override-status")

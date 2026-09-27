@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
 import java.util.Set;
 import java.util.UUID;
 
@@ -23,6 +24,8 @@ public class UserResponseDto {
     private String fullName;
     private String email;
     private String phone;
+    private String avatarUrl;
+    private LocalDateTime lastActiveAt;
     private UserStatus status;
     private Set<String> roles;
 }

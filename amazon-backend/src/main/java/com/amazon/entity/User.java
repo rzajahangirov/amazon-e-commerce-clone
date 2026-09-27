@@ -6,6 +6,7 @@ import lombok.*;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -46,6 +47,12 @@ public class User extends BaseEntity {
     private String fullName;
 
     private String phone;
+
+    @Column(name = "avatar_url")
+    private String avatarUrl;
+
+    @Column(name = "last_active_at")
+    private LocalDateTime lastActiveAt;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)

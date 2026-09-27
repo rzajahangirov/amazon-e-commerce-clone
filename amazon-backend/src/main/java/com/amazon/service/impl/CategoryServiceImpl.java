@@ -171,6 +171,7 @@ public class CategoryServiceImpl implements CategoryService {
                 .slug(slug)
                 .parent(parent)
                 .level(level)
+                .commercialJustification(request.getCommercialJustification())
                 .isApproved(isApproved)
                 .build();
 
@@ -204,6 +205,7 @@ public class CategoryServiceImpl implements CategoryService {
                 .name(category.getName())
                 .slug(category.getSlug())
                 .level(category.getLevel())
+                .commercialJustification(category.getCommercialJustification())
                 .isApproved(category.getIsApproved())
                 .rejectionReason(category.getRejectionReason())
                 .createdAt(category.getCreatedAt())
@@ -224,6 +226,7 @@ public class CategoryServiceImpl implements CategoryService {
                 .name(category.getName())
                 .slug(category.getSlug())
                 .level(category.getLevel())
+                .commercialJustification(category.getCommercialJustification())
                 .isApproved(category.getIsApproved())
                 .rejectionReason(category.getRejectionReason())
                 .subCategories(subDtos)

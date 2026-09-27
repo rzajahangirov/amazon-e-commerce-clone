@@ -17,6 +17,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import jakarta.persistence.criteria.JoinType;
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -31,6 +34,7 @@ public class AdminGovernanceServiceImpl implements AdminGovernanceService {
     private final RoleRepository roleRepository;
     private final BrandRepository brandRepository;
     private final CategoryRepository categoryRepository;
+    private final BrandApplicationRepository brandApplicationRepository;
 
     @Override @Transactional(readOnly = true)
     public ResponseDto<PaginationPayload<UserResponseDto>> getUsers(String role, Boolean active, String email, int page, int size) {
@@ -84,12 +88,16 @@ public class AdminGovernanceServiceImpl implements AdminGovernanceService {
     }
 
     @Override @Transactional(readOnly = true)
-    public ResponseDto<PaginationPayload<AdminOrderResponseDto>> getOrders(OrderStatus status, UUID sellerId, UUID buyerId, String orderNumber, int page, int size) {
+    public ResponseDto<PaginationPayload<AdminOrderResponseDto>> getOrders(
+            OrderStatus status, UUID sellerId, UUID buyerId, String orderNumber,
+            LocalDate startDate, LocalDate endDate, int page, int size) {
         Specification<Order> spec = (root, query, cb) -> {
             var predicates = new ArrayList<jakarta.persistence.criteria.Predicate>();
             if (status != null) predicates.add(cb.equal(root.get("status"), status));
             if (buyerId != null) predicates.add(cb.equal(root.get("user").get("id"), buyerId));
             if (orderNumber != null && !orderNumber.isBlank()) predicates.add(cb.like(cb.lower(root.get("orderNumber")), "%" + orderNumber.trim().toLowerCase(Locale.ROOT) + "%"));
+            if (startDate != null) predicates.add(cb.greaterThanOrEqualTo(root.get("placedAt"), startDate.atStartOfDay()));
+            if (endDate != null) predicates.add(cb.lessThanOrEqualTo(root.get("placedAt"), endDate.atTime(LocalTime.MAX)));
             if (sellerId != null) {
                 var items = root.join("items", JoinType.INNER);
                 predicates.add(cb.equal(items.get("seller").get("id"), sellerId));
@@ -110,14 +118,36 @@ public class AdminGovernanceServiceImpl implements AdminGovernanceService {
 
     @Override @Transactional(readOnly = true)
     public ResponseDto<AdminAnalyticsResponseDto> getAnalytics() {
+        LocalDate today = LocalDate.now();
+        LocalDateTime trajectoryStart = today.minusDays(29).atStartOfDay();
+        List<Object[]> recentOrders = orderRepository.findPlacedAtAndTotalAmountSince(trajectoryStart);
+        Map<LocalDate, BigDecimal> dailyGmvMap = new HashMap<>();
+        for (Object[] row : recentOrders) {
+            LocalDateTime placedAt = (LocalDateTime) row[0];
+            BigDecimal amount = (BigDecimal) row[1];
+            if (placedAt != null && amount != null) {
+                dailyGmvMap.merge(placedAt.toLocalDate(), amount, BigDecimal::add);
+            }
+        }
+        List<DailyGmvPointDto> dailyTrajectory = new ArrayList<>(30);
+        for (int i = 29; i >= 0; i--) {
+            LocalDate date = today.minusDays(i);
+            dailyTrajectory.add(DailyGmvPointDto.builder()
+                    .date(date)
+                    .gmv(dailyGmvMap.getOrDefault(date, BigDecimal.ZERO))
+                    .build());
+        }
+
         AdminAnalyticsResponseDto metrics = AdminAnalyticsResponseDto.builder()
                 .totalGMV(Optional.ofNullable(orderRepository.calculateGmv()).orElse(BigDecimal.ZERO))
                 .totalOrdersCount(orderRepository.count())
                 .totalActiveUsers(userRepository.count((root, query, cb) -> cb.equal(root.get("status"), UserStatus.ACTIVE)))
                 .totalActiveSellers(sellerRepository.countActiveVerifiedSellers())
                 .totalActiveBrands(brandRepository.countByStatus(BrandStatus.ACTIVE))
+                .totalPendingBrandApplications(brandApplicationRepository.countByStatus(BrandApplicationStatus.PENDING))
                 .topPerformingBrands(mapMetrics(brandRepository.findTopRevenueBrands(PageRequest.of(0, 5))))
                 .topPerformingCategories(mapMetrics(categoryRepository.findTopRevenueCategories(PageRequest.of(0, 5))))
+                .dailyGmvTrajectory(dailyTrajectory)
                 .build();
         return ApiResponse.success(metrics, "Platform analytics retrieved successfully");
     }
@@ -133,6 +163,7 @@ public class AdminGovernanceServiceImpl implements AdminGovernanceService {
 
     private UserResponseDto mapUser(User user) {
         return UserResponseDto.builder().id(user.getId()).fullName(user.getFullName()).email(user.getEmail()).phone(user.getPhone())
+                .avatarUrl(user.getAvatarUrl()).lastActiveAt(user.getLastActiveAt())
                 .status(user.getStatus()).roles(user.getRoles().stream().map(Role::getName).collect(Collectors.toSet())).build();
     }
 

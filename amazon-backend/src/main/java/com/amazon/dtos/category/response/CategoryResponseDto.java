@@ -23,6 +23,7 @@ public class CategoryResponseDto {
     private String name;
     private String slug;
     private Integer level;
+    private String commercialJustification;
     private Boolean isApproved;
     private String rejectionReason;
     private List<CategoryResponseDto> subCategories;

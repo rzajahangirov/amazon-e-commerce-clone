@@ -13,7 +13,11 @@ public interface AdminGovernanceService {
     ResponseDto<UserResponseDto> updateUserRoles(UUID id, java.util.Set<String> roles);
     ResponseDto<PaginationPayload<AdminSellerResponseDto>> getSellers(Boolean verified, int page, int size);
     ResponseDto<AdminSellerResponseDto> updateSellerVerification(UUID id, boolean verified);
-    ResponseDto<PaginationPayload<AdminOrderResponseDto>> getOrders(OrderStatus status, UUID sellerId, UUID buyerId, String orderNumber, int page, int size);
+    ResponseDto<PaginationPayload<AdminOrderResponseDto>> getOrders(OrderStatus status, UUID sellerId, UUID buyerId, String orderNumber, java.time.LocalDate startDate, java.time.LocalDate endDate, int page, int size);
+
+    default ResponseDto<PaginationPayload<AdminOrderResponseDto>> getOrders(OrderStatus status, UUID sellerId, UUID buyerId, String orderNumber, int page, int size) {
+        return getOrders(status, sellerId, buyerId, orderNumber, null, null, page, size);
+    }
     ResponseDto<AdminOrderResponseDto> overrideOrderStatus(UUID id, OrderStatus status);
     ResponseDto<AdminAnalyticsResponseDto> getAnalytics();
 }

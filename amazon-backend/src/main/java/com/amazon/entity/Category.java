@@ -57,6 +57,9 @@ public class Category extends BaseEntity {
     @Builder.Default
     private Boolean isApproved = true;
 
+    @Column(name = "commercial_justification", length = 500)
+    private String commercialJustification;
+
     @Column(name = "rejection_reason", length = 1000)
     private String rejectionReason;
 

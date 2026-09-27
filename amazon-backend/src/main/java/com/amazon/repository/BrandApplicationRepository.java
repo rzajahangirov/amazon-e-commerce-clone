@@ -25,4 +25,6 @@ public interface BrandApplicationRepository extends JpaRepository<BrandApplicati
     boolean existsByBrandSlug(String brandSlug);
 
     boolean existsByBrandName(String brandName);
+
+    long countByStatus(BrandApplicationStatus status);
 }

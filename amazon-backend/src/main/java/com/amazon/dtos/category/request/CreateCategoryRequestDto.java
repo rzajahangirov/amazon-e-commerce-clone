@@ -29,4 +29,7 @@ public class CreateCategoryRequestDto implements ApiPayload {
     private String slug;
 
     private Integer level;
+
+    @Size(max = 500, message = "Commercial justification cannot exceed 500 characters")
+    private String commercialJustification;
 }

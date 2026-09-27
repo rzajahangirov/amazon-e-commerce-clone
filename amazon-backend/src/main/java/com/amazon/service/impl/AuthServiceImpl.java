@@ -23,6 +23,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -153,7 +154,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public ResponseDto<AuthResponseDto> login(LoginRequestDto request) {
         User user = userRepository.findByEmailWithRoles(request.getEmail().toLowerCase().trim())
                 .orElseThrow(() -> new InvalidCredentialsException(
@@ -167,6 +168,9 @@ public class AuthServiceImpl implements AuthService {
         if (!user.isActive()) {
             throw new BusinessRuleException(AuthError.ACCOUNT_INACTIVE.getMessage());
         }
+
+        user.setLastActiveAt(LocalDateTime.now());
+        userRepository.save(user);
 
         log.info("User logged in successfully: {}", user.getEmail());
 
@@ -190,6 +194,8 @@ public class AuthServiceImpl implements AuthService {
                 .fullName(user.getFullName())
                 .email(user.getEmail())
                 .phone(user.getPhone())
+                .avatarUrl(user.getAvatarUrl())
+                .lastActiveAt(user.getLastActiveAt())
                 .status(user.getStatus())
                 .roles(roleNames)
                 .build();

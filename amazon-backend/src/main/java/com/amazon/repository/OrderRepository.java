@@ -40,5 +40,8 @@ public interface OrderRepository extends JpaRepository<Order, UUID>, JpaSpecific
     @Query("SELECT COALESCE(SUM(o.totalAmount), 0) FROM Order o WHERE o.status NOT IN (com.amazon.enums.OrderStatus.CANCELLED, com.amazon.enums.OrderStatus.REFUNDED)")
     java.math.BigDecimal calculateGmv();
 
+    @Query("SELECT o.placedAt, o.totalAmount FROM Order o WHERE o.status NOT IN (com.amazon.enums.OrderStatus.CANCELLED, com.amazon.enums.OrderStatus.REFUNDED) AND o.placedAt >= :startDateTime")
+    java.util.List<Object[]> findPlacedAtAndTotalAmountSince(@Param("startDateTime") java.time.LocalDateTime startDateTime);
+
     long countByStatusNotIn(java.util.Collection<com.amazon.enums.OrderStatus> statuses);
 }
