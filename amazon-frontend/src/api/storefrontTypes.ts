@@ -100,6 +100,8 @@ export interface CartItem {
   listingId: string;
   productVariantId: string;
   productTitle: string;
+  productMainImageUrl?: string | null;
+  mainImageUrl?: string | null;
   variantName: string | null;
   asin: string | null;
   unitPrice: number;
@@ -234,6 +236,7 @@ export interface GuestCartItem {
   productTitle: string;
   variantName?: string | null;
   asin?: string | null;
+  productMainImageUrl?: string | null;
   mainImageUrl?: string | null;
   unitPrice: number;
   quantity: number;

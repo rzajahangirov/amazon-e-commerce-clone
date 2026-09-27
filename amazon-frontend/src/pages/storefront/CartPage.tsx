@@ -90,7 +90,7 @@ export const CartPage: React.FC = () => {
                       <div className="cart-item-thumb">
                         <img
                           src={
-                            (item as { mainImageUrl?: string }).mainImageUrl ||
+                            item.productMainImageUrl || item.mainImageUrl ||
                             'https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?w=300&auto=format&fit=crop&q=60'
                           }
                           alt={itemTitle}
@@ -210,7 +210,7 @@ export const CartPage: React.FC = () => {
                       <div className="cart-item-thumb">
                         <img
                           src={
-                            (item as { mainImageUrl?: string }).mainImageUrl ||
+                            item.productMainImageUrl || item.mainImageUrl ||
                             'https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?w=300&auto=format&fit=crop&q=60'
                           }
                           alt={item.productTitle}

@@ -23,6 +23,7 @@ public class CartItemResponseDto {
     private UUID listingId;
     private UUID productVariantId;
     private String productTitle;
+    private String productMainImageUrl;
     private String variantName;
     private String asin;
     private BigDecimal unitPrice;
@@ -36,4 +37,3 @@ public class CartItemResponseDto {
     private String stockWarning;
     private String badgeTag;
 }
-

@@ -9,6 +9,7 @@ import type {
   Order,
   Product,
   ProductListingDto,
+  ProductVariant,
   ProductSearchParams,
   Review,
   WishlistItem,
@@ -41,6 +42,10 @@ export const storefrontApi = {
 
   async getVariantBuybox(variantId: string): Promise<ProductListingDto> {
     return apiGet<ProductListingDto>(`/products/variants/${variantId}/buybox`);
+  },
+
+  async getVariantByAsin(asin: string): Promise<ProductVariant> {
+    return apiGet<ProductVariant>(`/products/variants/asin/${encodeURIComponent(asin)}`);
   },
 
   async getVariantListings(variantId: string): Promise<ProductListingDto[]> {

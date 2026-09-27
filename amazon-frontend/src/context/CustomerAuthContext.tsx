@@ -78,6 +78,22 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
   const isAuthenticated = Boolean(token && user);
 
+  // Older backend deployments do not include the image URL on cart items yet.
+  // Resolve it through the item's ASIN so existing carts still show their own product image.
+  const enrichCartImages = useCallback(async (cart: Cart): Promise<Cart> => {
+    const items = await Promise.all(cart.items.map(async (item) => {
+      if (item.productMainImageUrl || item.mainImageUrl || !item.asin) return item;
+      try {
+        const variant = await storefrontApi.getVariantByAsin(item.asin);
+        const product = await storefrontApi.getProductById(variant.productId);
+        return { ...item, productMainImageUrl: product.mainImageUrl };
+      } catch {
+        return item;
+      }
+    }));
+    return { ...cart, items };
+  }, []);
+
   // Persist guest cart
   useEffect(() => {
     localStorage.setItem(GUEST_CART_STORAGE_KEY, JSON.stringify(guestCart));
@@ -106,14 +122,14 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
     }
     try {
       setLoadingCart(true);
-      const data = await storefrontApi.getCart();
+      const data = await enrichCartImages(await storefrontApi.getCart());
       setServerCart(data);
     } catch {
       setServerCart(null);
     } finally {
       setLoadingCart(false);
     }
-  }, [isAuthenticated]);
+  }, [enrichCartImages, isAuthenticated]);
 
   // Synchronize guest cart items upon login
   const syncGuestCart = async () => {
@@ -153,7 +169,7 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
         ]);
         if (!ignore) {
           if (cartRes) {
-            setServerCart(cartRes);
+            setServerCart(await enrichCartImages(cartRes));
           }
           if (wishRes) {
             setWishlistIds(new Set((wishRes.content || []).map((w: { productId: string }) => w.productId)));
@@ -165,7 +181,7 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
     };
     void sync();
     return () => { ignore = true; };
-  }, [isAuthenticated]);
+  }, [enrichCartImages, isAuthenticated]);
 
   const login = async (email: string, password: string) => {
     const res = await storefrontApi.login(email, password);
@@ -294,7 +310,7 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
       let targetListingId = listingId;
       try {
         const updated = await storefrontApi.addToCart(targetListingId, quantity);
-        setServerCart(updated);
+        setServerCart(await enrichCartImages(updated));
       } catch (err) {
         // Fallback: If listing was not found, resolve the actual buybox listing ID
         try {
@@ -302,7 +318,7 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
           if (resolved && resolved !== listingId) {
             targetListingId = resolved;
             const updated = await storefrontApi.addToCart(targetListingId, quantity);
-            setServerCart(updated);
+            setServerCart(await enrichCartImages(updated));
             return;
           }
         } catch {
@@ -345,10 +361,10 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
     if (isAuthenticated) {
       if (quantity <= 0) {
         const updated = await storefrontApi.removeCartItem(idOrListingId);
-        setServerCart(updated);
+        setServerCart(await enrichCartImages(updated));
       } else {
         const updated = await storefrontApi.updateCartItem(idOrListingId, quantity);
-        setServerCart(updated);
+        setServerCart(await enrichCartImages(updated));
       }
     } else {
       if (quantity <= 0) {
@@ -364,7 +380,7 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const removeCartItem = async (idOrListingId: string) => {
     if (isAuthenticated) {
       const updated = await storefrontApi.removeCartItem(idOrListingId);
-      setServerCart(updated);
+      setServerCart(await enrichCartImages(updated));
     } else {
       setGuestCart((prev) => prev.filter((i) => i.listingId !== idOrListingId));
     }
@@ -373,7 +389,7 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const toggleSaveForLater = async (itemId: string) => {
     if (isAuthenticated) {
       const updated = await storefrontApi.toggleSaveForLater(itemId);
-      setServerCart(updated);
+      setServerCart(await enrichCartImages(updated));
     } else {
       setGuestCart((prev) =>
         prev.map((i) => (i.listingId === itemId ? { ...i, isSavedForLater: !i.isSavedForLater } : i))

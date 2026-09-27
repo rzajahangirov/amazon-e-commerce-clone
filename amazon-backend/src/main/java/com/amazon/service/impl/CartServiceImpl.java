@@ -222,6 +222,7 @@ public class CartServiceImpl implements CartService {
                         .listingId(listing != null ? listing.getId() : null)
                         .productVariantId(listing != null && listing.getProductVariant() != null ? listing.getProductVariant().getId() : null)
                         .productTitle(listing != null && listing.getProductVariant() != null && listing.getProductVariant().getProduct() != null ? listing.getProductVariant().getProduct().getTitle() : null)
+                        .productMainImageUrl(listing != null && listing.getProductVariant() != null && listing.getProductVariant().getProduct() != null ? listing.getProductVariant().getProduct().getMainImageUrl() : null)
                         .variantName(listing != null && listing.getProductVariant() != null ? listing.getProductVariant().getVariantName() : null)
                         .asin(listing != null && listing.getProductVariant() != null ? listing.getProductVariant().getAsin() : null)
                         .unitPrice(price)
