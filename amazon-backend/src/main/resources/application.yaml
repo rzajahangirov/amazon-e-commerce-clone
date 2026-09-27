@@ -45,6 +45,8 @@ app:
     expiration-ms: 86400000
   upload:
     dir: uploads
+  seeder:
+    enabled: ${SEED_DATABASE:false}
 
 springdoc:
   swagger-ui:
