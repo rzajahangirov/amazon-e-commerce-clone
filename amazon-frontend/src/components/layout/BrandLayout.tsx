@@ -1,0 +1,215 @@
+import React, { useState } from 'react';
+import { NavLink, Outlet, useLocation } from 'react-router-dom';
+import type { BrandRole } from '../../api/brandTypes';
+import { useBrandRBAC } from '../../hooks/useBrandRBAC';
+import './BrandLayout.css';
+
+export const BrandLayout: React.FC = () => {
+  const { activeRole, simulatedRole, setSimulatedRole, permissions, profile, roleTitle } = useBrandRBAC();
+  const location = useLocation();
+  const [marketDropdownOpen, setMarketDropdownOpen] = useState(false);
+
+  // Compute breadcrumb title based on path
+  const getBreadcrumbTitle = () => {
+    const path = location.pathname;
+    if (path.includes('analytics')) return 'Brand Analytics & Marketplace Overview';
+    if (path.includes('catalog')) return 'Brand Catalog & ASIN Governance';
+    if (path.includes('team')) return 'Brand Team & Access Management';
+    if (path.includes('marketing')) return 'Brand Marketing Posts & Social Feeds';
+    if (path.includes('profile')) return 'Brand Profile & Trademark Governance';
+    if (path.includes('categories')) return 'Category Proposals & Taxonomy Requests';
+    return 'Brand Overview';
+  };
+
+  return (
+    <div className="brand-shell">
+      {/* Sidebar Navigation */}
+      <aside className="brand-sidebar">
+        <div className="brand-sidebar-header">
+          <div className="brand-logo-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+              <path d="M9 12l2 2 4-4" />
+            </svg>
+          </div>
+          <div className="brand-logo-text">
+            <span className="brand-logo-title">NexusBrand</span>
+            <span className="brand-logo-subtitle">ENTERPRISE REGISTRY</span>
+          </div>
+        </div>
+
+        {/* Entity Switcher Card */}
+        <div className="brand-entity-card">
+          <div className="brand-entity-info">
+            <div className="brand-entity-name">
+              {profile?.brand.name || 'Anker Innovations Global'}
+              <span className="brand-verified-check">✓</span>
+            </div>
+            <div className="brand-entity-reg">
+              USPTO Reg #{profile?.brand.trademarkRegistrationNumber || '97412854'}
+            </div>
+          </div>
+          <div className="brand-entity-chevrons">
+            <span>▴</span>
+            <span>▾</span>
+          </div>
+        </div>
+
+        {/* Navigation Items */}
+        <nav className="brand-nav">
+          <NavLink
+            to="/brand/analytics"
+            className={({ isActive }) => (isActive ? 'brand-nav-link active' : 'brand-nav-link')}
+          >
+            <span className="brand-nav-icon">📊</span>
+            <span>Brand Analytics</span>
+          </NavLink>
+
+          <NavLink
+            to="/brand/catalog"
+            className={({ isActive }) => (isActive ? 'brand-nav-link active' : 'brand-nav-link')}
+          >
+            <span className="brand-nav-icon">📦</span>
+            <span>Catalog &amp; ASINs</span>
+          </NavLink>
+
+          {/* DYNAMIC RBAC GUARD: Hide Team & Access if NOT BRAND_OWNER or BRAND_SUPER_ADMIN */}
+          {permissions.canViewTeam && (
+            <NavLink
+              to="/brand/team"
+              className={({ isActive }) => (isActive ? 'brand-nav-link active' : 'brand-nav-link')}
+            >
+              <span className="brand-nav-icon">👥</span>
+              <span>Team &amp; Access</span>
+            </NavLink>
+          )}
+
+          <NavLink
+            to="/brand/marketing"
+            className={({ isActive }) => (isActive ? 'brand-nav-link active' : 'brand-nav-link')}
+          >
+            <span className="brand-nav-icon">📢</span>
+            <span>Marketing &amp; Posts</span>
+          </NavLink>
+
+          <NavLink
+            to="/brand/profile"
+            className={({ isActive }) => (isActive ? 'brand-nav-link active' : 'brand-nav-link')}
+          >
+            <span className="brand-nav-icon">🏛️</span>
+            <span>Brand Profile</span>
+          </NavLink>
+
+          <NavLink
+            to="/brand/categories"
+            className={({ isActive }) => (isActive ? 'brand-nav-link active' : 'brand-nav-link')}
+          >
+            <span className="brand-nav-icon">🏷️</span>
+            <span>Category Proposals</span>
+          </NavLink>
+        </nav>
+
+        {/* Sidebar Footer */}
+        <div className="brand-sidebar-footer">
+          <div className="brand-footer-status">
+            <span className="brand-status-dot" />
+            <span>Marketplace Unified</span>
+          </div>
+          <div className="brand-footer-desc">NA &amp; EU Region Synced</div>
+          <a href="#support" className="brand-footer-link" onClick={(e) => e.preventDefault()}>
+            <span>Quick Support</span>
+            <span>→</span>
+          </a>
+        </div>
+      </aside>
+
+      {/* Main Content View */}
+      <div className="brand-main">
+        {/* Topbar Header */}
+        <header className="brand-topbar">
+          <div className="brand-topbar-left">
+            <div className="brand-breadcrumb">
+              <span>Portal</span>
+              <span>›</span>
+              <span className="brand-breadcrumb-curr">{getBreadcrumbTitle()}</span>
+            </div>
+
+            <div className="brand-search-box">
+              <span className="brand-search-icon">🔍</span>
+              <input
+                type="text"
+                className="brand-search-input"
+                placeholder="Search ASIN, trademark, violation..."
+              />
+              <kbd className="brand-search-kbd">Ctrl K</kbd>
+            </div>
+          </div>
+
+          <div className="brand-topbar-right">
+            {/* Dynamic RBAC Role Simulator for testing all 5 roles on the fly */}
+            <div className="brand-role-simulator" title="Test dynamic RBAC permissions">
+              <span className="brand-simulator-label">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                </svg>
+                Role:
+              </span>
+              <select
+                className="brand-simulator-select"
+                value={simulatedRole || activeRole}
+                onChange={(e) => setSimulatedRole(e.target.value as BrandRole)}
+              >
+                <option value="BRAND_OWNER">BRAND_OWNER (Full Access)</option>
+                <option value="BRAND_SUPER_ADMIN">BRAND_SUPER_ADMIN (Admin)</option>
+                <option value="BRAND_ADMIN">BRAND_ADMIN (Catalog &amp; Posts)</option>
+                <option value="BRAND_SELLER">BRAND_SELLER (Read-Only)</option>
+                <option value="BRAND_MARKETING_MEMBER">BRAND_MARKETING_MEMBER (Creative)</option>
+              </select>
+            </div>
+
+            <div
+              className="brand-topbar-market"
+              onClick={() => setMarketDropdownOpen(!marketDropdownOpen)}
+            >
+              <span>🌐 US Marketplace</span>
+              <span>⌄</span>
+            </div>
+
+            <button type="button" className="brand-icon-btn" title="3 Unresolved Alerts">
+              <span>🔔</span>
+              <span className="brand-badge-pill">3</span>
+            </button>
+
+            <button type="button" className="brand-icon-btn" title="Registry Documentation">
+              <span>📖</span>
+            </button>
+
+            {/* Current Brand User Profile */}
+            <div className="brand-user-card" title={`Logged in as ${roleTitle}`}>
+              <div className="brand-user-avatar">
+                {profile?.brand.ownerName
+                  ? profile.brand.ownerName
+                      .split(' ')
+                      .map((n) => n[0])
+                      .join('')
+                      .slice(0, 2)
+                  : 'EV'}
+              </div>
+              <div className="brand-user-details">
+                <span className="brand-user-name">
+                  {profile?.brand.ownerName || 'Elena Vance'}
+                </span>
+                <span className="brand-user-role">{roleTitle}</span>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        {/* Content Body */}
+        <main className="brand-content">
+          <Outlet />
+        </main>
+      </div>
+    </div>
+  );
+};
