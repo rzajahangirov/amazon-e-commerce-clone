@@ -1,5 +1,6 @@
 package com.amazon.entity;
 
+import com.amazon.converter.JsonToStringMapConverter;
 import com.amazon.enums.GovernanceStatus;
 import com.amazon.enums.ProductStatus;
 import jakarta.persistence.*;
@@ -9,7 +10,9 @@ import org.hibernate.annotations.SQLRestriction;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -66,6 +69,29 @@ public class Product extends BaseEntity {
 
     @Column(name = "base_price", precision = 10, scale = 2)
     private BigDecimal basePrice;
+
+    @Column(name = "list_price", precision = 10, scale = 2)
+    private BigDecimal listPrice;
+
+    @Column(name = "discount_percentage")
+    private Integer discountPercentage;
+
+    @Column(name = "badge_tag", length = 50)
+    private String badgeTag;
+
+    @Column(name = "model_number", length = 100)
+    private String modelNumber;
+
+    @Column(name = "delivery_estimate")
+    private String deliveryEstimate;
+
+    @Column(name = "sales_volume_text")
+    private String salesVolumeText;
+
+    @Column(name = "specifications_json", columnDefinition = "TEXT")
+    @Convert(converter = JsonToStringMapConverter.class)
+    @Builder.Default
+    private Map<String, String> specifications = new HashMap<>();
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)

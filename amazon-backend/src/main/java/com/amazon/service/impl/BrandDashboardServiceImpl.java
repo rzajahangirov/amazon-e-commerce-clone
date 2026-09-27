@@ -774,6 +774,13 @@ public class BrandDashboardServiceImpl implements BrandDashboardService {
                 .governanceStatus(product.getGovernanceStatus())
                 .averageRating(product.getAverageRating() != null ? product.getAverageRating() : 0.0)
                 .totalReviews(product.getTotalReviews() != null ? product.getTotalReviews() : 0)
+                .listPrice(product.getListPrice())
+                .discountPercentage(product.getDiscountPercentage())
+                .badgeTag(product.getBadgeTag())
+                .modelNumber(product.getModelNumber())
+                .deliveryEstimate(product.getDeliveryEstimate())
+                .salesVolumeText(product.getSalesVolumeText())
+                .specifications(product.getSpecifications())
                 .createdAt(product.getCreatedAt())
                 .updatedAt(product.getUpdatedAt())
                 .build();

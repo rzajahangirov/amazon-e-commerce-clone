@@ -3,7 +3,8 @@ import type { ResponseDto } from './types';
 export const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080/v1/api';
 
-const TOKEN_STORAGE_KEY = 'admin_access_token';
+export const CUSTOMER_TOKEN_KEY = 'customer_access_token';
+export const ADMIN_TOKEN_KEY = 'admin_access_token';
 
 export class ApiError extends Error {
   status: number;
@@ -16,19 +17,35 @@ export class ApiError extends Error {
 }
 
 export function getAccessToken(): string {
-  const fromStorage = localStorage.getItem(TOKEN_STORAGE_KEY);
-  if (fromStorage) {
-    return fromStorage;
+  const customerToken = localStorage.getItem(CUSTOMER_TOKEN_KEY);
+  if (customerToken) {
+    return customerToken;
+  }
+  const adminToken = localStorage.getItem(ADMIN_TOKEN_KEY);
+  if (adminToken) {
+    return adminToken;
+  }
+  const generalToken = localStorage.getItem('access_token');
+  if (generalToken) {
+    return generalToken;
   }
   const fromEnv = import.meta.env.VITE_ADMIN_ACCESS_TOKEN;
   if (fromEnv) {
     return fromEnv;
   }
-  return 'mock-admin-development-token';
+  return '';
 }
 
 export function setAccessToken(token: string): void {
-  localStorage.setItem(TOKEN_STORAGE_KEY, token);
+  localStorage.setItem(ADMIN_TOKEN_KEY, token);
+}
+
+export function setCustomerAccessToken(token: string): void {
+  localStorage.setItem(CUSTOMER_TOKEN_KEY, token);
+}
+
+export function removeCustomerAccessToken(): void {
+  localStorage.removeItem(CUSTOMER_TOKEN_KEY);
 }
 
 function buildUrl(path: string, query?: Record<string, string | number | boolean | undefined>): string {
@@ -49,14 +66,31 @@ export async function apiRequest<T>(
   options: RequestInit & { query?: Record<string, string | number | boolean | undefined> } = {},
 ): Promise<ResponseDto<T>> {
   const { query, headers, ...init } = options;
+  const token = getAccessToken();
+  const requestHeaders: Record<string, string> = {
+    Accept: 'application/json',
+    'Content-Type': 'application/json',
+  };
+  if (token) {
+    requestHeaders['Authorization'] = `Bearer ${token}`;
+  }
+  if (headers) {
+    if (headers instanceof Headers) {
+      headers.forEach((val, key) => {
+        requestHeaders[key] = val;
+      });
+    } else if (Array.isArray(headers)) {
+      headers.forEach(([key, val]) => {
+        requestHeaders[key] = val;
+      });
+    } else {
+      Object.assign(requestHeaders, headers);
+    }
+  }
+
   const response = await fetch(buildUrl(path, query), {
     ...init,
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${getAccessToken()}`,
-      ...headers,
-    },
+    headers: requestHeaders,
   });
 
   let body: ResponseDto<T>;

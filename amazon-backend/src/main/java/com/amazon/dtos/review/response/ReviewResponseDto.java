@@ -11,6 +11,7 @@ import java.util.UUID;
 
 /**
  * Response DTO representing customer review and rating details.
+ * Includes enterprise fields for professional title/role and verification status.
  */
 @Data
 @NoArgsConstructor
@@ -25,6 +26,13 @@ public class ReviewResponseDto {
     private String userFullName;
     private Integer rating;
     private String comment;
+
+    // --- Enterprise Storefront Fields ---
+    private String userTitleRole;
+    @Builder.Default
+    private Boolean isVerifiedEnterprise = false;
+
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }
+

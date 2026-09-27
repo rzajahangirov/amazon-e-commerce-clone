@@ -11,6 +11,7 @@ import java.util.UUID;
 
 /**
  * Response DTO for an item within a shopping cart.
+ * Includes enterprise storefront fields for seller SKU, stock warnings, and badges.
  */
 @Data
 @NoArgsConstructor
@@ -29,4 +30,10 @@ public class CartItemResponseDto {
     private BigDecimal subtotal;
     private Boolean isSavedForLater;
     private LocalDateTime addedAt;
+
+    // --- Enterprise Storefront Fields ---
+    private String sellerSku;
+    private String stockWarning;
+    private String badgeTag;
 }
+

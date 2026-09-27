@@ -10,10 +10,12 @@ import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
  * Detailed Response DTO for a product, including its variants.
+ * Supports enterprise storefront UI with rich product cards and detail pages.
  */
 @Data
 @NoArgsConstructor
@@ -45,6 +47,16 @@ public class ProductResponseDto {
     private Long viewCount = 0L;
     private BigDecimal buyBoxPrice;
     private String mainImageUrl;
+
+    // --- Enterprise Storefront Fields ---
+    private BigDecimal listPrice;
+    private Integer discountPercentage;
+    private String badgeTag;
+    private String modelNumber;
+    private String deliveryEstimate;
+    private String salesVolumeText;
+    private Map<String, String> specifications;
+
     @Builder.Default
     private Boolean isFavorited = false;
     private LocalDateTime createdAt;

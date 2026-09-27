@@ -94,6 +94,15 @@ public class ProductController {
         return ResponseEntity.ok(productService.getProducts(categoryId, page, size, email));
     }
 
+    @GetMapping("/{id}/frequently-bought-together")
+    @Operation(summary = "Get frequently bought together", description = "Returns up to 3 recommended complementary products for the 'Frequently Bought Together' section")
+    public ResponseEntity<ResponseDto<List<ProductResponseDto>>> getFrequentlyBoughtTogether(
+            @PathVariable UUID id,
+            Principal principal) {
+        String email = principal != null ? principal.getName() : null;
+        return ResponseEntity.ok(productService.getFrequentlyBoughtTogether(id, email));
+    }
+
     // --- Product Variant Endpoints ---
 
     @GetMapping("/{id}/variants")

@@ -239,9 +239,57 @@ public class ProductServiceImpl implements ProductService {
                 .viewCount(product.getViewCount() != null ? product.getViewCount() : 0L)
                 .buyBoxPrice(buyBoxPrice != null ? buyBoxPrice : product.getBasePrice())
                 .mainImageUrl(product.getMainImageUrl())
+                // Enterprise Storefront Fields
+                .listPrice(product.getListPrice())
+                .discountPercentage(product.getDiscountPercentage())
+                .badgeTag(product.getBadgeTag())
+                .modelNumber(product.getModelNumber())
+                .deliveryEstimate(product.getDeliveryEstimate())
+                .salesVolumeText(product.getSalesVolumeText())
+                .specifications(product.getSpecifications())
                 .isFavorited(isFavorited)
                 .createdAt(product.getCreatedAt())
                 .updatedAt(product.getUpdatedAt())
                 .build();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ResponseDto<List<ProductResponseDto>> getFrequentlyBoughtTogether(UUID productId, String userEmail) {
+        Product product = productRepository.findWithDetailsById(productId)
+                .orElseThrow(() -> new ResourceNotFoundException(CatalogError.PRODUCT_NOT_FOUND.getMessage()));
+
+        // Find top 3 ACTIVE products in the same category, excluding the current product
+        UUID categoryId = product.getCategory() != null ? product.getCategory().getId() : null;
+        List<Product> candidates;
+        if (categoryId != null) {
+            Page<Product> candidatePage = productRepository.findByCategoryIdAndStatus(
+                    categoryId, com.amazon.enums.ProductStatus.ACTIVE,
+                    PageRequest.of(0, 4, Sort.by(Sort.Direction.DESC, "totalUnitsSold")));
+            candidates = candidatePage.getContent().stream()
+                    .filter(p -> !p.getId().equals(productId))
+                    .limit(3)
+                    .toList();
+        } else {
+            candidates = List.of();
+        }
+
+        // Resolve favorites
+        Set<UUID> favoritedProductIds = Collections.emptySet();
+        List<UUID> candidateIds = candidates.stream().map(Product::getId).toList();
+        if (userEmail != null && !candidateIds.isEmpty()) {
+            Optional<User> userOpt = userRepository.findByEmail(userEmail);
+            if (userOpt.isPresent()) {
+                favoritedProductIds = wishlistItemRepository.findFavoritedProductIdsByUserIdAndProductIdIn(
+                        userOpt.get().getId(), candidateIds);
+            }
+        }
+
+        final Set<UUID> finalFavIds = favoritedProductIds;
+        List<ProductResponseDto> results = candidates.stream()
+                .map(p -> mapToResponseDto(p, finalFavIds.contains(p.getId()), p.getTotalUnitsSold(), p.getBasePrice()))
+                .toList();
+
+        return ApiResponse.success(results, "Frequently bought together products retrieved successfully");
     }
 }

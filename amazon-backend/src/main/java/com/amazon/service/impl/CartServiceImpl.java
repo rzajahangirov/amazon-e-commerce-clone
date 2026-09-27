@@ -226,6 +226,14 @@ public class CartServiceImpl implements CartService {
                         .subtotal(subtotal)
                         .isSavedForLater(item.getIsSavedForLater())
                         .addedAt(item.getAddedAt())
+                        // Enterprise Storefront Fields
+                        .sellerSku(listing != null ? listing.getSellerSku() : null)
+                        .stockWarning(listing != null && listing.getStockQuantity() != null && listing.getStockQuantity() < 10
+                                ? "Only " + listing.getStockQuantity() + " units left in stock"
+                                : null)
+                        .badgeTag(listing != null && listing.getProductVariant() != null && listing.getProductVariant().getProduct() != null
+                                ? listing.getProductVariant().getProduct().getBadgeTag()
+                                : null)
                         .build());
             }
         }

@@ -46,6 +46,13 @@ public class Review extends BaseEntity {
     @Column(columnDefinition = "TEXT")
     private String comment;
 
+    @Column(name = "user_title_role", length = 200)
+    private String userTitleRole;
+
+    @Column(name = "is_verified_enterprise", nullable = false)
+    @Builder.Default
+    private Boolean isVerifiedEnterprise = false;
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

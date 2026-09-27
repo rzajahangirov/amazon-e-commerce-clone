@@ -207,6 +207,9 @@ public class ReviewServiceImpl implements ReviewService {
                 .userFullName(review.getUser() != null ? review.getUser().getFullName() : null)
                 .rating(review.getRating())
                 .comment(review.getComment())
+                // Enterprise Storefront Fields
+                .userTitleRole(review.getUserTitleRole())
+                .isVerifiedEnterprise(review.getIsVerifiedEnterprise() != null ? review.getIsVerifiedEnterprise() : false)
                 .createdAt(review.getCreatedAt())
                 .updatedAt(review.getUpdatedAt())
                 .build();

@@ -21,4 +21,9 @@ public interface ProductService {
     ResponseDto<PaginationPayload<ProductResponseDto>> getProducts(UUID categoryId, int page, int size, String userEmail);
 
     ResponseDto<PaginationPayload<ProductResponseDto>> searchProducts(ProductSearchRequestDto request, String userEmail);
+
+    /**
+     * Returns up to 3 recommended complementary products for the "Frequently Bought Together" section.
+     */
+    ResponseDto<java.util.List<ProductResponseDto>> getFrequentlyBoughtTogether(UUID productId, String userEmail);
 }
