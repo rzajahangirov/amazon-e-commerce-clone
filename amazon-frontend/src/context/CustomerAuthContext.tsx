@@ -164,10 +164,25 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
     const res = await storefrontApi.login(email, password);
     setCustomerAccessToken(res.token);
     setToken(res.token);
+
+    const resolvedEmail = res.user?.email || res.email || email;
+    const emailPrefix = resolvedEmail?.split('@')?.[0] ?? '';
+    const resolvedFullName =
+      res.user?.fullName ||
+      res.fullName ||
+      emailPrefix ||
+      'Customer';
+    const resolvedRole =
+      (res.user?.roles && res.user.roles.length > 0 ? res.user.roles[0] : undefined) ||
+      res.user?.role ||
+      res.role ||
+      'ROLE_CUSTOMER';
+
     const userData: CustomerUser = {
-      email: res.email,
-      fullName: res.fullName || res.email.split('@')[0],
-      role: res.role,
+      id: res.user?.id,
+      email: resolvedEmail,
+      fullName: resolvedFullName,
+      role: resolvedRole,
     };
     setUser(userData);
     localStorage.setItem(CUSTOMER_USER_KEY, JSON.stringify(userData));
@@ -183,10 +198,26 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
     const res = await storefrontApi.register(payload);
     setCustomerAccessToken(res.token);
     setToken(res.token);
+
+    const resolvedEmail = res.user?.email || res.email || payload.email;
+    const emailPrefix = resolvedEmail?.split('@')?.[0] ?? '';
+    const resolvedFullName =
+      res.user?.fullName ||
+      res.fullName ||
+      payload.fullName ||
+      emailPrefix ||
+      'Customer';
+    const resolvedRole =
+      (res.user?.roles && res.user.roles.length > 0 ? res.user.roles[0] : undefined) ||
+      res.user?.role ||
+      res.role ||
+      'ROLE_CUSTOMER';
+
     const userData: CustomerUser = {
-      email: res.email,
-      fullName: res.fullName || payload.fullName,
-      role: res.role,
+      id: res.user?.id,
+      email: resolvedEmail,
+      fullName: resolvedFullName,
+      role: resolvedRole,
     };
     setUser(userData);
     localStorage.setItem(CUSTOMER_USER_KEY, JSON.stringify(userData));

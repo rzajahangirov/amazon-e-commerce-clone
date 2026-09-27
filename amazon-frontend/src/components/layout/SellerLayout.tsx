@@ -1,4 +1,5 @@
-import { NavLink, Outlet } from 'react-router-dom';
+import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { useCustomerAuth } from '../../context/CustomerAuthContext';
 import './SellerLayout.css';
 
 interface NavItem {
@@ -40,6 +41,24 @@ const navSections: NavSection[] = [
 ];
 
 export function SellerLayout() {
+  const { user, logout } = useCustomerAuth();
+  const navigate = useNavigate();
+
+  // Dynamic user data from auth context
+  const displayName = user?.fullName || user?.email?.split('@')?.[0] || 'Merchant';
+  const userInitials = displayName
+    .split(' ')
+    .map((n: string) => n[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase();
+  const userRole = user?.role === 'ROLE_ADMIN' ? 'Platform Admin' : 'Merchant Ops';
+
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+  };
+
   return (
     <div className="seller-shell">
       <aside className="seller-sidebar">
@@ -110,11 +129,39 @@ export function SellerLayout() {
             <span className="seller-market-badge">US Marketplace (USD $)</span>
           </div>
           <div className="seller-topbar-user">
-            <span className="seller-user-avatar">SJ</span>
+            <span className="seller-user-avatar">{userInitials}</span>
             <div className="seller-user-info">
-              <strong>Sarah Jenkins</strong>
-              <small>Lead Merchant Ops</small>
+              <strong>{displayName}</strong>
+              <small>{userRole}</small>
             </div>
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="seller-logout-btn"
+              title="Sign out of Seller Portal"
+              style={{
+                background: 'none',
+                border: '1px solid rgba(255,255,255,0.2)',
+                color: '#94a3b8',
+                borderRadius: '6px',
+                padding: '4px 10px',
+                fontSize: '0.72rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+                marginLeft: '10px',
+                transition: 'all 0.15s ease',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.color = '#f87171';
+                e.currentTarget.style.borderColor = '#f87171';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.color = '#94a3b8';
+                e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)';
+              }}
+            >
+              Sign Out
+            </button>
           </div>
         </header>
 

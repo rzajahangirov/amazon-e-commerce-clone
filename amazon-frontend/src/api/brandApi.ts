@@ -429,21 +429,13 @@ let memoryUpdateRequests: BrandUpdateRequestResponseDto[] = [...MOCK_UPDATE_REQU
 export const brandApi = {
   // 1. Profile & Team
   async getBrandProfile(): Promise<BrandProfileResponseDto> {
-    try {
-      const resp = await apiRequest<BrandProfileResponseDto>('/brand-dashboard/profile', {
-        method: 'GET',
-      });
-      if (resp.data?.brand) {
-        return resp.data;
-      }
-      return MOCK_BRAND_PROFILE;
-    } catch (err) {
-      console.warn('Backend unavailable, using mock brand profile:', err);
-      return {
-        ...MOCK_BRAND_PROFILE,
-        teamMembers: memoryMembers,
-      };
+    const resp = await apiRequest<BrandProfileResponseDto>('/brand-dashboard/profile', {
+      method: 'GET',
+    });
+    if (resp.data?.brand) {
+      return resp.data;
     }
+    throw new Error('No brand profile associated with this account');
   },
 
   async submitUpdateRequest(
@@ -856,19 +848,15 @@ export const brandApi = {
 
   // 6. Brand Analytics
   async getBrandAnalytics(): Promise<BrandAnalyticsResponseDto> {
-    try {
-      const resp = await apiRequest<BrandAnalyticsResponseDto>(
-        '/brand-dashboard/analytics',
-        {
-          method: 'GET',
-        },
-      );
-      if (resp.data && resp.data.totalBrandRevenue !== undefined) {
-        return resp.data;
-      }
-    } catch (err) {
-      console.warn('Backend getBrandAnalytics failed, returning fallback metrics:', err);
+    const resp = await apiRequest<BrandAnalyticsResponseDto>(
+      '/brand-dashboard/analytics',
+      {
+        method: 'GET',
+      },
+    );
+    if (resp.data) {
+      return resp.data;
     }
-    return MOCK_BRAND_ANALYTICS;
+    throw new Error('Failed to retrieve brand analytics');
   },
 };

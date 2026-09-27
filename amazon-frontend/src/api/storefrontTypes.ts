@@ -200,10 +200,19 @@ export interface CreateReviewRequest {
 
 export interface AuthResponse {
   token: string;
-  type: string;
-  email: string;
-  role: string;
+  type?: string;
+  tokenType?: string;
+  email?: string;
+  role?: string;
   fullName?: string;
+  user?: {
+    id?: string;
+    fullName?: string;
+    email?: string;
+    phone?: string;
+    roles?: string[];
+    role?: string;
+  };
 }
 
 export interface CustomerUser {

@@ -43,8 +43,11 @@ export function formatRoleLabel(role: string): string {
   return role.replace(/^ROLE_/, '').replace(/_/g, ' ');
 }
 
-export function userInitials(fullName: string): string {
-  const parts = fullName.trim().split(/\s+/);
+export function userInitials(fullName?: string | null): string {
+  if (!fullName || typeof fullName !== 'string') {
+    return '?';
+  }
+  const parts = fullName.trim().split(/\s+/).filter(Boolean);
   if (parts.length === 0) {
     return '?';
   }

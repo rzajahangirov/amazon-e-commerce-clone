@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { brandApi } from '../api/brandApi';
 import type { BrandMemberResponseDto, BrandProfileResponseDto, BrandRole } from '../api/brandTypes';
+import { useCustomerAuth } from './CustomerAuthContext';
 
 export interface BrandPermissions {
   canViewTeam: boolean;
@@ -19,8 +20,9 @@ export interface BrandPermissions {
 export interface BrandAuthContextType {
   profile: BrandProfileResponseDto | null;
   currentMember: BrandMemberResponseDto | null;
-  detectedRole: BrandRole;
-  activeRole: BrandRole;
+  detectedRole: BrandRole | null;
+  activeRole: BrandRole | null;
+  hasBrand: boolean;
   permissions: BrandPermissions;
   loading: boolean;
   error: string | null;
@@ -30,34 +32,43 @@ export interface BrandAuthContextType {
 const BrandAuthContext = createContext<BrandAuthContextType | undefined>(undefined);
 
 export const BrandAuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user, isAuthenticated } = useCustomerAuth();
   const [profile, setProfile] = useState<BrandProfileResponseDto | null>(null);
   const [currentMember, setCurrentMember] = useState<BrandMemberResponseDto | null>(null);
-  const [detectedRole, setDetectedRole] = useState<BrandRole>('BRAND_OWNER');
+  const [detectedRole, setDetectedRole] = useState<BrandRole | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const fetchProfile = async () => {
+    if (!isAuthenticated) {
+      setProfile(null);
+      setCurrentMember(null);
+      setDetectedRole(null);
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);
       const data = await brandApi.getBrandProfile();
+
+      if (!data || !data.brand) {
+        setProfile(null);
+        setCurrentMember(null);
+        setDetectedRole(null);
+        setError('No brand associated with this account');
+        return;
+      }
+
       setProfile(data);
 
       if (data.teamMembers && data.teamMembers.length > 0) {
-        // Automatically match authenticated user email if available
         let matchedMember: BrandMemberResponseDto | undefined;
-        const rawUser = localStorage.getItem('amazon_customer_user_v1');
-        if (rawUser) {
-          try {
-            const userObj = JSON.parse(rawUser);
-            if (userObj.email) {
-              matchedMember = data.teamMembers.find(
-                (m) => m.userEmail?.toLowerCase() === userObj.email.toLowerCase()
-              );
-            }
-          } catch {
-            // ignore
-          }
+        if (user?.email) {
+          matchedMember = data.teamMembers.find(
+            (m) => m.userEmail?.toLowerCase() === user.email.toLowerCase(),
+          );
         }
 
         const resolved =
@@ -71,9 +82,10 @@ export const BrandAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         setDetectedRole('BRAND_OWNER');
       }
     } catch (err) {
-      console.error('Error loading brand profile:', err);
-      setError(err instanceof Error ? err.message : 'Failed to load brand profile');
-      setDetectedRole('BRAND_OWNER');
+      setProfile(null);
+      setCurrentMember(null);
+      setDetectedRole(null);
+      setError(err instanceof Error ? err.message : 'No brand profile associated with this account');
     } finally {
       setLoading(false);
     }
@@ -82,27 +94,38 @@ export const BrandAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   useEffect(() => {
     let ignore = false;
     const run = async () => {
+      if (!isAuthenticated) {
+        if (!ignore) {
+          setProfile(null);
+          setCurrentMember(null);
+          setDetectedRole(null);
+          setLoading(false);
+        }
+        return;
+      }
+
       try {
         setLoading(true);
         setError(null);
         const data = await brandApi.getBrandProfile();
         if (ignore) return;
+
+        if (!data || !data.brand) {
+          setProfile(null);
+          setCurrentMember(null);
+          setDetectedRole(null);
+          setError('No brand associated with this account');
+          return;
+        }
+
         setProfile(data);
 
         if (data.teamMembers && data.teamMembers.length > 0) {
           let matchedMember: BrandMemberResponseDto | undefined;
-          const rawUser = localStorage.getItem('amazon_customer_user_v1');
-          if (rawUser) {
-            try {
-              const userObj = JSON.parse(rawUser);
-              if (userObj.email) {
-                matchedMember = data.teamMembers.find(
-                  (m) => m.userEmail?.toLowerCase() === userObj.email.toLowerCase()
-                );
-              }
-            } catch {
-              // ignore
-            }
+          if (user?.email) {
+            matchedMember = data.teamMembers.find(
+              (m) => m.userEmail?.toLowerCase() === user.email.toLowerCase(),
+            );
           }
           const resolved =
             matchedMember ||
@@ -117,21 +140,41 @@ export const BrandAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         }
       } catch (err) {
         if (!ignore) {
-          console.error('Error loading brand profile:', err);
-          setError(err instanceof Error ? err.message : 'Failed to load brand profile');
-          setDetectedRole('BRAND_OWNER');
+          setProfile(null);
+          setCurrentMember(null);
+          setDetectedRole(null);
+          setError(err instanceof Error ? err.message : 'No brand profile associated with this account');
         }
       } finally {
         if (!ignore) setLoading(false);
       }
     };
     void run();
-    return () => { ignore = true; };
-  }, []);
+    return () => {
+      ignore = true;
+    };
+  }, [isAuthenticated, user?.email]);
 
-  const activeRole: BrandRole = detectedRole;
+  const activeRole: BrandRole | null = detectedRole;
+  const hasBrand = Boolean(profile && profile.brand && profile.brand.id);
 
   const permissions: BrandPermissions = useMemo(() => {
+    if (!activeRole) {
+      return {
+        canViewTeam: false,
+        canManageTeam: false,
+        canModifyBrandOwner: false,
+        canManageCatalog: false,
+        canRegisterAsin: false,
+        canCreateMarketingPost: false,
+        canProposeProfileUpdate: false,
+        canProposeCategory: false,
+        canDeleteProduct: false,
+        isSeller: false,
+        isMarketingOnly: false,
+      };
+    }
+
     switch (activeRole) {
       case 'BRAND_OWNER':
         return {
@@ -151,7 +194,7 @@ export const BrandAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         return {
           canViewTeam: true,
           canManageTeam: true,
-          canModifyBrandOwner: false, // Cannot modify or remove BRAND_OWNER
+          canModifyBrandOwner: false,
           canManageCatalog: true,
           canRegisterAsin: true,
           canCreateMarketingPost: true,
@@ -163,7 +206,7 @@ export const BrandAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         };
       case 'BRAND_ADMIN':
         return {
-          canViewTeam: false, // Cannot manage team members
+          canViewTeam: true,
           canManageTeam: false,
           canModifyBrandOwner: false,
           canManageCatalog: true,
@@ -180,7 +223,7 @@ export const BrandAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           canViewTeam: false,
           canManageTeam: false,
           canModifyBrandOwner: false,
-          canManageCatalog: false, // Read-only view
+          canManageCatalog: true,
           canRegisterAsin: false,
           canCreateMarketingPost: false,
           canProposeProfileUpdate: false,
@@ -227,6 +270,7 @@ export const BrandAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         currentMember,
         detectedRole,
         activeRole,
+        hasBrand,
         permissions,
         loading,
         error,

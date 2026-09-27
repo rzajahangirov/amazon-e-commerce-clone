@@ -1,11 +1,28 @@
 import React from 'react';
-import { NavLink, Outlet, useLocation } from 'react-router-dom';
+import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useBrandRBAC } from '../../hooks/useBrandRBAC';
+import { useCustomerAuth } from '../../context/CustomerAuthContext';
 import './BrandLayout.css';
 
 export const BrandLayout: React.FC = () => {
   const { permissions, profile, roleTitle } = useBrandRBAC();
+  const { user, logout } = useCustomerAuth();
   const location = useLocation();
+  const navigate = useNavigate();
+
+  // Dynamic user data — prefer brand profile owner, fall back to logged-in customer
+  const ownerName = profile?.brand?.ownerName || user?.fullName || user?.email?.split('@')?.[0] || 'Brand Member';
+  const ownerInitials = ownerName
+    .split(' ')
+    .map((n: string) => n[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+  };
 
   // Compute breadcrumb title based on path
   const getBreadcrumbTitle = () => {
@@ -40,11 +57,13 @@ export const BrandLayout: React.FC = () => {
         <div className="brand-entity-card">
           <div className="brand-entity-info">
             <div className="brand-entity-name">
-              {profile?.brand.name || 'Anker Innovations Global'}
-              <span className="brand-verified-check">✓</span>
+              {profile?.brand?.name || 'No Brand Selected'}
+              {profile?.brand?.name && <span className="brand-verified-check">✓</span>}
             </div>
             <div className="brand-entity-reg">
-              USPTO Reg #{profile?.brand.trademarkRegistrationNumber || '97412854'}
+              {profile?.brand?.trademarkRegistrationNumber
+                ? `USPTO Reg #${profile.brand.trademarkRegistrationNumber}`
+                : 'Trademark pending verification'}
             </div>
           </div>
           <div className="brand-entity-chevrons">
@@ -158,20 +177,41 @@ export const BrandLayout: React.FC = () => {
             {/* Current Brand User Profile */}
             <div className="brand-user-card" title={`Logged in as ${roleTitle}`}>
               <div className="brand-user-avatar">
-                {profile?.brand.ownerName
-                  ? profile.brand.ownerName
-                      .split(' ')
-                      .map((n) => n[0])
-                      .join('')
-                      .slice(0, 2)
-                  : 'EV'}
+                {ownerInitials}
               </div>
               <div className="brand-user-details">
                 <span className="brand-user-name">
-                  {profile?.brand.ownerName || 'Elena Vance'}
+                  {ownerName}
                 </span>
                 <span className="brand-user-role">{roleTitle}</span>
               </div>
+              <button
+                type="button"
+                onClick={handleLogout}
+                title="Sign out of Brand Portal"
+                style={{
+                  background: 'none',
+                  border: '1px solid rgba(255,255,255,0.15)',
+                  color: '#94a3b8',
+                  borderRadius: '6px',
+                  padding: '4px 10px',
+                  fontSize: '0.72rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  marginLeft: '10px',
+                  transition: 'all 0.15s ease',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.color = '#f87171';
+                  e.currentTarget.style.borderColor = '#f87171';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.color = '#94a3b8';
+                  e.currentTarget.style.borderColor = 'rgba(255,255,255,0.15)';
+                }}
+              >
+                Sign Out
+              </button>
             </div>
           </div>
         </header>

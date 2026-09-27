@@ -1,4 +1,5 @@
-import { NavLink, Outlet } from 'react-router-dom';
+import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { useCustomerAuth } from '../../context/CustomerAuthContext';
 import './AdminLayout.css';
 
 const navItems = [
@@ -10,6 +11,17 @@ const navItems = [
 ];
 
 export function AdminLayout() {
+  const { user, logout } = useCustomerAuth();
+  const navigate = useNavigate();
+
+  const displayName = user?.fullName || user?.email?.split('@')?.[0] || 'Administrator';
+  const userRole = user?.role === 'ROLE_ADMIN' ? 'SUPER ADMIN' : (user?.role || 'ADMIN');
+
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+  };
+
   return (
     <div className="admin-shell">
       <aside className="admin-sidebar">
@@ -62,9 +74,36 @@ export function AdminLayout() {
           <div className="admin-topbar-meta">
             <span className="env-pill">PRODUCTION • US-EAST</span>
             <div className="admin-user">
-              <span className="admin-user-name">Platform Supervisor</span>
-              <small>SUPER ADMIN</small>
+              <span className="admin-user-name">{displayName}</span>
+              <small>{userRole}</small>
             </div>
+            <button
+              type="button"
+              onClick={handleLogout}
+              title="Sign out of Admin Console"
+              style={{
+                background: 'none',
+                border: '1px solid rgba(255,255,255,0.2)',
+                color: '#94a3b8',
+                borderRadius: '6px',
+                padding: '4px 10px',
+                fontSize: '0.72rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+                marginLeft: '10px',
+                transition: 'all 0.15s ease',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.color = '#f87171';
+                e.currentTarget.style.borderColor = '#f87171';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.color = '#94a3b8';
+                e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)';
+              }}
+            >
+              Sign Out
+            </button>
           </div>
         </header>
         <main className="admin-content">

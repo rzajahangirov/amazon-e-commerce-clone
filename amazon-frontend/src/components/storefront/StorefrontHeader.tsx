@@ -232,7 +232,9 @@ export const StorefrontHeader: React.FC = () => {
           onMouseLeave={(e) => (e.currentTarget.style.borderColor = 'transparent')}
         >
           <div style={{ fontSize: '0.68rem', color: '#cccccc' }}>
-            {isAuthenticated ? `Hello, ${user?.fullName?.split(' ')[0]}` : 'Hello, sign in'}
+            {isAuthenticated
+              ? `Hello, ${user?.fullName?.split(' ')?.[0] || user?.email?.split('@')?.[0] || 'Customer'}`
+              : 'Hello, sign in'}
           </div>
           <div style={{ fontSize: '0.82rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '3px' }}>
             Account & Lists

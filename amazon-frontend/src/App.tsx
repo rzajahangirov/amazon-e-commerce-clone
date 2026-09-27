@@ -5,6 +5,9 @@ import { BrandLayout } from './components/layout/BrandLayout';
 import { StorefrontLayout } from './components/layout/StorefrontLayout';
 import { BrandAuthProvider } from './context/BrandAuthContext';
 import { BrandRouteGuard } from './components/brand/BrandRouteGuard';
+import { BrandGuard } from './components/brand/BrandGuard';
+import { SellerGuard } from './components/seller/SellerGuard';
+import { AdminGuard } from './components/admin/AdminGuard';
 import { CustomerAuthProvider } from './context/CustomerAuthContext';
 
 // Admin Pages
@@ -52,8 +55,8 @@ function App() {
           <Route path="wishlist" element={<WishlistPage />} />
         </Route>
 
-        {/* Admin Operations Console */}
-        <Route path="/admin" element={<AdminLayout />}>
+        {/* Admin Operations Console (RBAC Protected) */}
+        <Route path="/admin" element={<AdminGuard><AdminLayout /></AdminGuard>}>
           <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<AdminDashboardPage />} />
           <Route path="orders" element={<AdminOrdersPage />} />
@@ -70,8 +73,8 @@ function App() {
           />
         </Route>
 
-        {/* Enterprise Merchant Portal (Seller Dashboard) */}
-        <Route path="/seller" element={<SellerLayout />}>
+        {/* Enterprise Merchant Portal (Seller Dashboard – RBAC Protected) */}
+        <Route path="/seller" element={<SellerGuard><SellerLayout /></SellerGuard>}>
           <Route index element={<Navigate to="analytics" replace />} />
           <Route path="analytics" element={<SellerAnalyticsPage />} />
           <Route path="listings" element={<SellerListingsPage />} />
@@ -79,12 +82,14 @@ function App() {
           <Route path="profile" element={<SellerProfilePage />} />
         </Route>
 
-        {/* Enterprise Brand Registry Portal (Brand Dashboard with Dynamic RBAC) */}
+        {/* Enterprise Brand Registry Portal (Brand Dashboard – RBAC Protected) */}
         <Route
           path="/brand"
           element={
             <BrandAuthProvider>
-              <BrandLayout />
+              <BrandGuard>
+                <BrandLayout />
+              </BrandGuard>
             </BrandAuthProvider>
           }
         >

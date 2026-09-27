@@ -315,7 +315,7 @@ export const BrandTeamPage: React.FC = () => {
                           fontSize: '0.85rem',
                         }}
                       >
-                        {m.userFullName
+                        {(m.userFullName || 'Member')
                           .split(' ')
                           .map((n) => n[0])
                           .join('')
