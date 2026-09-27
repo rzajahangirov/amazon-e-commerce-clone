@@ -18,7 +18,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import com.amazon.enums.OrderItemStatus;
+import org.springframework.format.annotation.DateTimeFormat;
+
 import java.security.Principal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -89,10 +93,15 @@ public class SellerDashboardController {
     // ==========================================
 
     @GetMapping("/orders")
-    @Operation(summary = "Get seller orders", description = "List of order items assigned to this seller")
-    public ResponseEntity<ResponseDto<List<SellerOrderItemResponseDto>>> getSellerOrders(Principal principal) {
+    @Operation(summary = "Get seller orders", description = "List of order items assigned to this seller with optional status, search, and date filters")
+    public ResponseEntity<ResponseDto<List<SellerOrderItemResponseDto>>> getSellerOrders(
+            Principal principal,
+            @RequestParam(required = false) OrderItemStatus status,
+            @RequestParam(required = false) String searchKey,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
         String email = principal.getName();
-        return ResponseEntity.ok(sellerDashboardService.getSellerOrders(email));
+        return ResponseEntity.ok(sellerDashboardService.getSellerOrders(email, status, searchKey, startDate, endDate));
     }
 
     @PutMapping("/orders/{orderItemId}/status")

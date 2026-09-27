@@ -24,4 +24,6 @@ public class UpdateListingStockRequestDto implements ApiPayload {
     private Integer stockQuantity;
 
     private BigDecimal price;
+
+    private BigDecimal minPriceFloor;
 }

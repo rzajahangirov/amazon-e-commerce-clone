@@ -34,6 +34,9 @@ public class CreateListingRequestDto implements ApiPayload {
     @Positive(message = "Price must be greater than zero")
     private BigDecimal price;
 
+    @Positive(message = "Minimum price floor must be greater than zero")
+    private BigDecimal minPriceFloor;
+
     @NotNull(message = "Stock quantity is required")
     @PositiveOrZero(message = "Stock quantity cannot be negative")
     private Integer stockQuantity;

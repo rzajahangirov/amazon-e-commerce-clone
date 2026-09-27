@@ -31,7 +31,16 @@ public interface SellerDashboardService {
     ResponseDto<ProductListingResponseDto> updateListingStock(String callerEmail, UUID listingId, UpdateListingStockRequestDto request);
 
     // Order Fulfillment
-    ResponseDto<List<SellerOrderItemResponseDto>> getSellerOrders(String callerEmail);
+    ResponseDto<List<SellerOrderItemResponseDto>> getSellerOrders(
+            String callerEmail,
+            com.amazon.enums.OrderItemStatus status,
+            String searchKey,
+            java.time.LocalDate startDate,
+            java.time.LocalDate endDate);
+
+    default ResponseDto<List<SellerOrderItemResponseDto>> getSellerOrders(String callerEmail) {
+        return getSellerOrders(callerEmail, null, null, null, null);
+    }
 
     ResponseDto<SellerOrderItemResponseDto> updateOrderItemStatus(String callerEmail, UUID orderItemId, UpdateOrderItemStatusRequestDto request);
 

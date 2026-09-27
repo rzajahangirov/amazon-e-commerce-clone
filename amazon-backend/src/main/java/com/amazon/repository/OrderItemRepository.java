@@ -2,6 +2,7 @@ package com.amazon.repository;
 
 import com.amazon.entity.OrderItem;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -11,7 +12,7 @@ import java.util.UUID;
  * Spring Data JPA repository for {@link OrderItem} entities.
  */
 @Repository
-public interface OrderItemRepository extends JpaRepository<OrderItem, UUID> {
+public interface OrderItemRepository extends JpaRepository<OrderItem, UUID>, JpaSpecificationExecutor<OrderItem> {
 
     List<OrderItem> findByOrderId(UUID orderId);
 

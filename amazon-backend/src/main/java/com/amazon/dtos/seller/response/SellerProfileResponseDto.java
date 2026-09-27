@@ -28,6 +28,11 @@ public class SellerProfileResponseDto {
     private Boolean isVerified;
     private UUID brandId;
     private String brandName;
+    private String supportEmail;
+    private String merchantPhone;
+    private String returnPolicyUrl;
+    private String legalName;
+    private String stateTaxPermitNumber;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

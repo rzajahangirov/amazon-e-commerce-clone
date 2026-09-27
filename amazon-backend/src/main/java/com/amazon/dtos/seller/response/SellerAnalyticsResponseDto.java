@@ -24,6 +24,9 @@ public class SellerAnalyticsResponseDto {
     private Long totalPendingOrders;
     private Long totalShippedOrders;
     private Long totalDeliveredOrders;
+    private Double buyBoxDominancePercentage;
+    private Long stockAlertsCount;
+    private List<HourlyOrderInfluxDto> hourlyOrderInflux;
     private List<TopSellingListingDto> topSellingListings;
 
     @Data

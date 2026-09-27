@@ -203,6 +203,7 @@ public class DatabaseSeeder implements ApplicationRunner {
                 "Just Do It. World's leading athletic footwear and apparel brand.",
                 encodedPassword,
                 new BrandUserSpec("nike.seller@test.com", "Nike Seller Manager", "+1-555-200-0001", BrandRole.BRAND_SELLER),
+                new BrandUserSpec("nike.superadmin@test.com", "Nike Brand Super Admin", "+1-555-200-0004", BrandRole.BRAND_SUPER_ADMIN),
                 new BrandUserSpec("nike.admin@test.com", "Nike Brand Admin", "+1-555-200-0002", BrandRole.BRAND_ADMIN),
                 new BrandUserSpec("nike.marketing@test.com", "Nike Marketing Lead", "+1-555-200-0003", BrandRole.BRAND_MARKETING_MEMBER)
         );
@@ -213,7 +214,9 @@ public class DatabaseSeeder implements ApplicationRunner {
                 "Impossible Is Nothing. Global sportswear and lifestyle brand.",
                 encodedPassword,
                 new BrandUserSpec("adidas.seller@test.com", "Adidas Seller Manager", "+1-555-300-0001", BrandRole.BRAND_SELLER),
-                new BrandUserSpec("adidas.admin@test.com", "Adidas Brand Admin", "+1-555-300-0002", BrandRole.BRAND_ADMIN)
+                new BrandUserSpec("adidas.superadmin@test.com", "Adidas Brand Super Admin", "+1-555-300-0003", BrandRole.BRAND_SUPER_ADMIN),
+                new BrandUserSpec("adidas.admin@test.com", "Adidas Brand Admin", "+1-555-300-0002", BrandRole.BRAND_ADMIN),
+                new BrandUserSpec("adidas.marketing@test.com", "Adidas Marketing Lead", "+1-555-300-0004", BrandRole.BRAND_MARKETING_MEMBER)
         );
 
         // ── Brand 3: Samsung ──
@@ -222,7 +225,9 @@ public class DatabaseSeeder implements ApplicationRunner {
                 "Imagine the Possibilities. Global leader in consumer electronics.",
                 encodedPassword,
                 new BrandUserSpec("samsung.seller@test.com", "Samsung Seller Manager", "+1-555-400-0001", BrandRole.BRAND_SELLER),
-                new BrandUserSpec("samsung.admin@test.com", "Samsung Brand Admin", "+1-555-400-0002", BrandRole.BRAND_ADMIN)
+                new BrandUserSpec("samsung.superadmin@test.com", "Samsung Brand Super Admin", "+1-555-400-0003", BrandRole.BRAND_SUPER_ADMIN),
+                new BrandUserSpec("samsung.admin@test.com", "Samsung Brand Admin", "+1-555-400-0002", BrandRole.BRAND_ADMIN),
+                new BrandUserSpec("samsung.marketing@test.com", "Samsung Marketing Lead", "+1-555-400-0004", BrandRole.BRAND_MARKETING_MEMBER)
         );
 
         // ── Brand 4: Apple ──
@@ -231,7 +236,9 @@ public class DatabaseSeeder implements ApplicationRunner {
                 "Think Different. Premium consumer electronics and software ecosystem.",
                 encodedPassword,
                 new BrandUserSpec("apple.seller@test.com", "Apple Seller Manager", "+1-555-500-0001", BrandRole.BRAND_SELLER),
-                new BrandUserSpec("apple.admin@test.com", "Apple Brand Admin", "+1-555-500-0002", BrandRole.BRAND_ADMIN)
+                new BrandUserSpec("apple.superadmin@test.com", "Apple Brand Super Admin", "+1-555-500-0003", BrandRole.BRAND_SUPER_ADMIN),
+                new BrandUserSpec("apple.admin@test.com", "Apple Brand Admin", "+1-555-500-0002", BrandRole.BRAND_ADMIN),
+                new BrandUserSpec("apple.marketing@test.com", "Apple Marketing Lead", "+1-555-500-0004", BrandRole.BRAND_MARKETING_MEMBER)
         );
 
         // ── Brand 5: Sony ──
@@ -329,6 +336,11 @@ public class DatabaseSeeder implements ApplicationRunner {
                 .taxNumber(taxNumber)
                 .businessAddress("123 Commerce Blvd, Suite " + ThreadLocalRandom.current().nextInt(100, 999))
                 .bankAccountDetails("IBAN: XX00-XXXX-XXXX-" + ThreadLocalRandom.current().nextInt(1000, 9999))
+                .supportEmail("support@" + storeName.toLowerCase().replaceAll("[^a-z0-9]", "") + ".com")
+                .merchantPhone("+1-800-555-" + ThreadLocalRandom.current().nextInt(1000, 9999))
+                .returnPolicyUrl("https://www.amazon.com/sp?seller=" + storeName.toLowerCase().replaceAll("[^a-z0-9]", "-") + "&tab=returns")
+                .legalName(storeName + " Enterprise LLC")
+                .stateTaxPermitNumber("ST-" + ThreadLocalRandom.current().nextInt(100000, 999999))
                 .isVerified(true)
                 .build();
         sellerProfileRepository.save(profile);
@@ -546,11 +558,14 @@ public class DatabaseSeeder implements ApplicationRunner {
                     .setScale(2, RoundingMode.HALF_UP);
             int stock = ThreadLocalRandom.current().nextInt(10, 500);
 
+            BigDecimal minFloor = listingPrice.multiply(BigDecimal.valueOf(0.85)).setScale(2, RoundingMode.HALF_UP);
+
             ProductListing listing = ProductListing.builder()
                     .productVariant(variant)
                     .seller(seller)
                     .sellerSku("SKU-" + vs.asin)
                     .price(listingPrice)
+                    .minPriceFloor(minFloor)
                     .stockQuantity(stock)
                     .fulfillmentType(ThreadLocalRandom.current().nextBoolean() ? FulfillmentType.FBA : FulfillmentType.FBM)
                     .isBuyboxWinner(true)

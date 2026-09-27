@@ -50,6 +50,21 @@ public class SellerProfile extends BaseEntity {
     @Column(name = "bank_account_details", length = 500)
     private String bankAccountDetails;
 
+    @Column(name = "support_email", length = 150)
+    private String supportEmail;
+
+    @Column(name = "merchant_phone", length = 50)
+    private String merchantPhone;
+
+    @Column(name = "return_policy_url", length = 500)
+    private String returnPolicyUrl;
+
+    @Column(name = "legal_name", length = 200)
+    private String legalName;
+
+    @Column(name = "state_tax_permit_number", length = 100)
+    private String stateTaxPermitNumber;
+
     @Column(name = "is_verified", nullable = false)
     @Builder.Default
     private Boolean isVerified = false;

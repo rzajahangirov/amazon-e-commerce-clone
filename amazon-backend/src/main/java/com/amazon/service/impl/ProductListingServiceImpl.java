@@ -75,6 +75,7 @@ public class ProductListingServiceImpl implements ProductListingService {
                 .seller(seller)
                 .sellerSku(request.getSellerSku().trim())
                 .price(request.getPrice())
+                .minPriceFloor(request.getMinPriceFloor())
                 .stockQuantity(request.getStockQuantity())
                 .fulfillmentType(request.getFulfillmentType() != null ? request.getFulfillmentType() : FulfillmentType.FBM)
                 .status(request.getStatus() != null ? request.getStatus() : ListingStatus.ACTIVE)
@@ -124,6 +125,9 @@ public class ProductListingServiceImpl implements ProductListingService {
         listing.setStockQuantity(request.getStockQuantity());
         if (request.getPrice() != null) {
             listing.setPrice(request.getPrice());
+        }
+        if (request.getMinPriceFloor() != null) {
+            listing.setMinPriceFloor(request.getMinPriceFloor());
         }
 
         ProductListing updated = productListingRepository.save(listing);
@@ -185,6 +189,7 @@ public class ProductListingServiceImpl implements ProductListingService {
                 .sellerName(listing.getSeller() != null ? listing.getSeller().getFullName() : null)
                 .sellerSku(listing.getSellerSku())
                 .price(listing.getPrice())
+                .minPriceFloor(listing.getMinPriceFloor())
                 .stockQuantity(listing.getStockQuantity())
                 .fulfillmentType(listing.getFulfillmentType())
                 .isBuyboxWinner(listing.getIsBuyboxWinner())

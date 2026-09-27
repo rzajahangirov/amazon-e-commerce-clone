@@ -18,4 +18,9 @@ public class UpdateSellerProfileRequestDto implements ApiPayload {
     private String storeName;
     private String businessAddress;
     private String bankAccountDetails;
+    private String supportEmail;
+    private String merchantPhone;
+    private String returnPolicyUrl;
+    private String legalName;
+    private String stateTaxPermitNumber;
 }

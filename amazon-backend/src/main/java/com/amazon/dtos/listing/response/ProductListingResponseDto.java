@@ -28,6 +28,7 @@ public class ProductListingResponseDto {
     private String sellerName;
     private String sellerSku;
     private BigDecimal price;
+    private BigDecimal minPriceFloor;
     private Integer stockQuantity;
     private FulfillmentType fulfillmentType;
     private Boolean isBuyboxWinner;

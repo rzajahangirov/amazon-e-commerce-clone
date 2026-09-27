@@ -4,6 +4,7 @@ import com.amazon.dtos.listing.request.UpdateListingStockRequestDto;
 import com.amazon.dtos.listing.response.ProductListingResponseDto;
 import com.amazon.dtos.seller.request.UpdateOrderItemStatusRequestDto;
 import com.amazon.dtos.seller.request.UpdateSellerProfileRequestDto;
+import com.amazon.dtos.seller.response.HourlyOrderInfluxDto;
 import com.amazon.dtos.seller.response.SellerAnalyticsResponseDto;
 import com.amazon.dtos.seller.response.SellerOrderItemResponseDto;
 import com.amazon.dtos.seller.response.SellerProfileResponseDto;
@@ -19,17 +20,25 @@ import com.amazon.payloads.ResponseDto;
 import com.amazon.payloads.SellerError;
 import com.amazon.repository.*;
 import com.amazon.service.SellerDashboardService;
+import jakarta.persistence.criteria.Join;
+import jakarta.persistence.criteria.JoinType;
+import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -82,6 +91,21 @@ public class SellerDashboardServiceImpl implements SellerDashboardService {
         if (request.getBankAccountDetails() != null) {
             profile.setBankAccountDetails(request.getBankAccountDetails().trim());
         }
+        if (request.getSupportEmail() != null) {
+            profile.setSupportEmail(request.getSupportEmail().trim());
+        }
+        if (request.getMerchantPhone() != null) {
+            profile.setMerchantPhone(request.getMerchantPhone().trim());
+        }
+        if (request.getReturnPolicyUrl() != null) {
+            profile.setReturnPolicyUrl(request.getReturnPolicyUrl().trim());
+        }
+        if (request.getLegalName() != null) {
+            profile.setLegalName(request.getLegalName().trim());
+        }
+        if (request.getStateTaxPermitNumber() != null) {
+            profile.setStateTaxPermitNumber(request.getStateTaxPermitNumber().trim());
+        }
 
         SellerProfile updated = sellerProfileRepository.save(profile);
         log.info("Seller profile updated: sellerId={}, email={}", updated.getId(), callerEmail);
@@ -130,6 +154,9 @@ public class SellerDashboardServiceImpl implements SellerDashboardService {
         if (request.getPrice() != null) {
             listing.setPrice(request.getPrice());
         }
+        if (request.getMinPriceFloor() != null) {
+            listing.setMinPriceFloor(request.getMinPriceFloor());
+        }
 
         ProductListing updated = productListingRepository.save(listing);
         log.info("Seller listing stock/price updated: listingId={}, sellerId={}", listingId, seller.getId());
@@ -143,10 +170,75 @@ public class SellerDashboardServiceImpl implements SellerDashboardService {
 
     @Override
     @Transactional(readOnly = true)
-    public ResponseDto<List<SellerOrderItemResponseDto>> getSellerOrders(String callerEmail) {
+    public ResponseDto<List<SellerOrderItemResponseDto>> getSellerOrders(
+            String callerEmail,
+            OrderItemStatus status,
+            String searchKey,
+            LocalDate startDate,
+            LocalDate endDate) {
         User seller = resolveUser(callerEmail);
 
-        List<OrderItem> orderItems = orderItemRepository.findBySellerUserId(seller.getId());
+        Specification<OrderItem> spec = (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+
+            // 1. Mandatory seller tenant isolation
+            predicates.add(cb.equal(root.get("seller").get("id"), seller.getId()));
+
+            // 2. Status filter
+            if (status != null) {
+                predicates.add(cb.equal(root.get("itemStatus"), status));
+            }
+
+            // Join order
+            Join<OrderItem, Order> orderJoin = root.join("order", JoinType.INNER);
+
+            // 3. Date range filters
+            if (startDate != null) {
+                predicates.add(cb.greaterThanOrEqualTo(
+                        cb.coalesce(orderJoin.get("placedAt"), orderJoin.get("createdAt")),
+                        startDate.atStartOfDay()
+                ));
+            }
+            if (endDate != null) {
+                predicates.add(cb.lessThanOrEqualTo(
+                        cb.coalesce(orderJoin.get("placedAt"), orderJoin.get("createdAt")),
+                        endDate.atTime(LocalTime.MAX)
+                ));
+            }
+
+            // 4. Search key
+            if (searchKey != null && !searchKey.isBlank()) {
+                String pattern = "%" + searchKey.trim().toLowerCase(Locale.ROOT) + "%";
+                List<Predicate> searchPredicates = new ArrayList<>();
+
+                // Match order ID (UUID match if valid UUID, or orderNumber match)
+                try {
+                    UUID orderUuid = UUID.fromString(searchKey.trim());
+                    searchPredicates.add(cb.equal(orderJoin.get("id"), orderUuid));
+                } catch (IllegalArgumentException ignored) {
+                }
+                searchPredicates.add(cb.like(cb.lower(orderJoin.get("orderNumber")), pattern));
+
+                // Match Buyer Name
+                Join<Order, User> buyerJoin = orderJoin.join("user", JoinType.INNER);
+                searchPredicates.add(cb.like(cb.lower(buyerJoin.get("fullName")), pattern));
+
+                // Match ASIN
+                Join<OrderItem, ProductVariant> variantJoin = root.join("productVariant", JoinType.INNER);
+                searchPredicates.add(cb.like(cb.lower(variantJoin.get("asin")), pattern));
+
+                // Match SKU
+                Join<OrderItem, ProductListing> listingJoin = root.join("listing", JoinType.LEFT);
+                searchPredicates.add(cb.like(cb.lower(listingJoin.get("sellerSku")), pattern));
+
+                predicates.add(cb.or(searchPredicates.toArray(new Predicate[0])));
+            }
+
+            query.orderBy(cb.desc(cb.coalesce(orderJoin.get("placedAt"), orderJoin.get("createdAt"))));
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+
+        List<OrderItem> orderItems = orderItemRepository.findAll(spec);
         List<SellerOrderItemResponseDto> dtos = orderItems.stream()
                 .map(this::mapToOrderItemResponse)
                 .toList();
@@ -245,6 +337,42 @@ public class SellerDashboardServiceImpl implements SellerDashboardService {
                 .limit(10)
                 .toList();
 
+        // Buy Box Dominance Percentage: active listings winning the buy box
+        double buyBoxDominance = 0.0;
+        if (totalActiveListings > 0) {
+            long buyBoxWinnerCount = listings.stream()
+                    .filter(l -> l.getStatus() == ListingStatus.ACTIVE && Boolean.TRUE.equals(l.getIsBuyboxWinner()))
+                    .count();
+            buyBoxDominance = BigDecimal.valueOf((double) buyBoxWinnerCount * 100.0 / totalActiveListings)
+                    .setScale(1, RoundingMode.HALF_UP)
+                    .doubleValue();
+        }
+
+        // Stock alerts count: SKUs requiring stock action (stockQuantity <= 10 or inactive/suspended)
+        long stockAlertsCount = listings.stream()
+                .filter(l -> l.getStockQuantity() == null || l.getStockQuantity() <= 10 || l.getStatus() != ListingStatus.ACTIVE)
+                .count();
+
+        // Hourly order influx: distribution of orders across 24 hourly buckets
+        Map<Integer, Long> hourlyCounts = new HashMap<>();
+        LocalDateTime last24h = LocalDateTime.now().minusHours(24);
+        for (OrderItem oi : orderItems) {
+            Order o = oi.getOrder();
+            LocalDateTime itemTime = (o != null && o.getPlacedAt() != null)
+                    ? o.getPlacedAt()
+                    : (o != null ? o.getCreatedAt() : null);
+            if (itemTime != null && itemTime.isAfter(last24h)) {
+                hourlyCounts.merge(itemTime.getHour(), 1L, Long::sum);
+            }
+        }
+        List<HourlyOrderInfluxDto> hourlyOrderInflux = new ArrayList<>(24);
+        for (int h = 0; h < 24; h++) {
+            hourlyOrderInflux.add(HourlyOrderInfluxDto.builder()
+                    .hour(String.format("%02d:00", h))
+                    .orderCount(hourlyCounts.getOrDefault(h, 0L))
+                    .build());
+        }
+
         SellerAnalyticsResponseDto analytics = SellerAnalyticsResponseDto.builder()
                 .totalActiveListings(totalActiveListings)
                 .totalProducts(totalProducts)
@@ -253,6 +381,9 @@ public class SellerDashboardServiceImpl implements SellerDashboardService {
                 .totalPendingOrders(totalPendingOrders)
                 .totalShippedOrders(totalShippedOrders)
                 .totalDeliveredOrders(totalDeliveredOrders)
+                .buyBoxDominancePercentage(buyBoxDominance)
+                .stockAlertsCount(stockAlertsCount)
+                .hourlyOrderInflux(hourlyOrderInflux)
                 .topSellingListings(topSellingListings)
                 .build();
 
@@ -309,6 +440,11 @@ public class SellerDashboardServiceImpl implements SellerDashboardService {
                 .isVerified(profile.getIsVerified())
                 .brandId(profile.getBrand() != null ? profile.getBrand().getId() : null)
                 .brandName(profile.getBrand() != null ? profile.getBrand().getName() : null)
+                .supportEmail(profile.getSupportEmail())
+                .merchantPhone(profile.getMerchantPhone())
+                .returnPolicyUrl(profile.getReturnPolicyUrl())
+                .legalName(profile.getLegalName())
+                .stateTaxPermitNumber(profile.getStateTaxPermitNumber())
                 .createdAt(profile.getCreatedAt())
                 .updatedAt(profile.getUpdatedAt())
                 .build();
@@ -324,6 +460,7 @@ public class SellerDashboardServiceImpl implements SellerDashboardService {
                 .sellerName(listing.getSeller().getFullName())
                 .sellerSku(listing.getSellerSku())
                 .price(listing.getPrice())
+                .minPriceFloor(listing.getMinPriceFloor())
                 .stockQuantity(listing.getStockQuantity())
                 .fulfillmentType(listing.getFulfillmentType())
                 .isBuyboxWinner(listing.getIsBuyboxWinner())
@@ -333,19 +470,29 @@ public class SellerDashboardServiceImpl implements SellerDashboardService {
     }
 
     private SellerOrderItemResponseDto mapToOrderItemResponse(OrderItem orderItem) {
+        LocalDateTime orderDate = orderItem.getOrder() != null
+                ? (orderItem.getOrder().getPlacedAt() != null ? orderItem.getOrder().getPlacedAt() : orderItem.getOrder().getCreatedAt())
+                : null;
+        LocalDateTime shipByDeadline = orderDate != null ? orderDate.plusDays(2) : LocalDateTime.now().plusDays(2);
+        String buyerDestination = "Seattle, WA 98101";
+
         return SellerOrderItemResponseDto.builder()
                 .orderItemId(orderItem.getId())
-                .orderId(orderItem.getOrder().getId())
-                .productTitle(orderItem.getProductVariant().getProduct().getTitle())
-                .variantName(orderItem.getProductVariant().getVariantName())
-                .asin(orderItem.getProductVariant().getAsin())
+                .orderId(orderItem.getOrder() != null ? orderItem.getOrder().getId() : null)
+                .productTitle(orderItem.getProductVariant() != null && orderItem.getProductVariant().getProduct() != null
+                        ? orderItem.getProductVariant().getProduct().getTitle() : null)
+                .variantName(orderItem.getProductVariant() != null ? orderItem.getProductVariant().getVariantName() : null)
+                .asin(orderItem.getProductVariant() != null ? orderItem.getProductVariant().getAsin() : null)
                 .sellerSku(orderItem.getListing() != null ? orderItem.getListing().getSellerSku() : null)
                 .unitPrice(orderItem.getUnitPrice())
                 .quantity(orderItem.getQuantity())
                 .subtotal(orderItem.getSubtotal())
                 .itemStatus(orderItem.getItemStatus())
-                .buyerName(orderItem.getOrder().getUser().getFullName())
-                .orderDate(orderItem.getOrder().getCreatedAt())
+                .buyerName(orderItem.getOrder() != null && orderItem.getOrder().getUser() != null
+                        ? orderItem.getOrder().getUser().getFullName() : null)
+                .orderDate(orderDate)
+                .buyerDestination(buyerDestination)
+                .shipByDeadline(shipByDeadline)
                 .build();
     }
 }

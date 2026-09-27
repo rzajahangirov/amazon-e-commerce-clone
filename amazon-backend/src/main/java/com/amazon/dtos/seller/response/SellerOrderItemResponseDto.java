@@ -31,4 +31,6 @@ public class SellerOrderItemResponseDto {
     private OrderItemStatus itemStatus;
     private String buyerName;
     private LocalDateTime orderDate;
+    private String buyerDestination;
+    private LocalDateTime shipByDeadline;
 }

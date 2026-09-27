@@ -50,6 +50,9 @@ public class ProductListing extends BaseEntity {
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal price;
 
+    @Column(name = "min_price_floor", precision = 10, scale = 2)
+    private BigDecimal minPriceFloor;
+
     @Builder.Default
     @Column(name = "stock_quantity", nullable = false)
     private Integer stockQuantity = 0;

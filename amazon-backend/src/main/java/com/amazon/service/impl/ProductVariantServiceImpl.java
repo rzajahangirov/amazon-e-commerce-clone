@@ -131,6 +131,7 @@ public class ProductVariantServiceImpl implements ProductVariantService {
                         .sellerName(l.getSeller() != null ? l.getSeller().getFullName() : null)
                         .sellerSku(l.getSellerSku())
                         .price(l.getPrice())
+                        .minPriceFloor(l.getMinPriceFloor())
                         .stockQuantity(l.getStockQuantity())
                         .fulfillmentType(l.getFulfillmentType())
                         .isBuyboxWinner(l.getIsBuyboxWinner())
