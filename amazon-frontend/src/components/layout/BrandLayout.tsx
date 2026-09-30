@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useBrandRBAC } from '../../hooks/useBrandRBAC';
 import { useCustomerAuth } from '../../context/CustomerAuthContext';
@@ -10,6 +10,7 @@ export const BrandLayout: React.FC = () => {
   const { user, logout } = useCustomerAuth();
   const location = useLocation();
   const navigate = useNavigate();
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   // Dynamic user data — prefer brand profile owner, fall back to logged-in customer
   const ownerName = profile?.brand?.ownerName || user?.fullName || user?.email?.split('@')?.[0] || 'Brand Member';
@@ -35,7 +36,8 @@ export const BrandLayout: React.FC = () => {
   return (
     <div className="brand-shell">
       {/* Sidebar Navigation */}
-      <aside className="brand-sidebar">
+      {mobileNavOpen && <button type="button" className="brand-nav-backdrop" aria-label="Close navigation" onClick={() => setMobileNavOpen(false)} />}
+      <aside className={`brand-sidebar${mobileNavOpen ? ' is-open' : ''}`}>
         <div className="brand-sidebar-header">
           <div className="brand-logo-icon">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -72,6 +74,7 @@ export const BrandLayout: React.FC = () => {
         <nav className="brand-nav">
           <NavLink
             to="/brand/analytics"
+            onClick={() => setMobileNavOpen(false)}
             className={({ isActive }) => (isActive ? 'brand-nav-link active' : 'brand-nav-link')}
           >
             <span className="brand-nav-icon">📊</span>
@@ -80,6 +83,7 @@ export const BrandLayout: React.FC = () => {
 
           <NavLink
             to="/brand/catalog"
+            onClick={() => setMobileNavOpen(false)}
             className={({ isActive }) => (isActive ? 'brand-nav-link active' : 'brand-nav-link')}
           >
             <span className="brand-nav-icon">📦</span>
@@ -90,6 +94,7 @@ export const BrandLayout: React.FC = () => {
           {permissions.canViewTeam && (
             <NavLink
               to="/brand/team"
+              onClick={() => setMobileNavOpen(false)}
               className={({ isActive }) => (isActive ? 'brand-nav-link active' : 'brand-nav-link')}
             >
               <span className="brand-nav-icon">👥</span>
@@ -99,6 +104,7 @@ export const BrandLayout: React.FC = () => {
 
           <NavLink
             to="/brand/marketing"
+            onClick={() => setMobileNavOpen(false)}
             className={({ isActive }) => (isActive ? 'brand-nav-link active' : 'brand-nav-link')}
           >
             <span className="brand-nav-icon">📢</span>
@@ -107,6 +113,7 @@ export const BrandLayout: React.FC = () => {
 
           <NavLink
             to="/brand/profile"
+            onClick={() => setMobileNavOpen(false)}
             className={({ isActive }) => (isActive ? 'brand-nav-link active' : 'brand-nav-link')}
           >
             <span className="brand-nav-icon">🏛️</span>
@@ -115,6 +122,7 @@ export const BrandLayout: React.FC = () => {
 
           <NavLink
             to="/brand/categories"
+            onClick={() => setMobileNavOpen(false)}
             className={({ isActive }) => (isActive ? 'brand-nav-link active' : 'brand-nav-link')}
           >
             <span className="brand-nav-icon">🏷️</span>
@@ -136,6 +144,15 @@ export const BrandLayout: React.FC = () => {
       <div className="brand-main">
         {/* Topbar Header */}
         <header className="brand-topbar">
+          <button
+            type="button"
+            className="dashboard-menu-toggle"
+            aria-label={mobileNavOpen ? 'Close navigation menu' : 'Open navigation menu'}
+            aria-expanded={mobileNavOpen}
+            onClick={() => setMobileNavOpen((open) => !open)}
+          >
+            <span /><span /><span />
+          </button>
           <div className="brand-topbar-left">
             <div className="brand-breadcrumb">
               <span>Portal</span>

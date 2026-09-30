@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useCustomerAuth } from '../../context/CustomerAuthContext';
 import './AdminLayout.css';
@@ -13,6 +14,7 @@ const navItems = [
 export function AdminLayout() {
   const { user, logout } = useCustomerAuth();
   const navigate = useNavigate();
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   const displayName = user?.fullName || user?.email?.split('@')?.[0] || 'Administrator';
   const userRole = user?.role === 'ROLE_ADMIN' ? 'SUPER ADMIN' : (user?.role || 'ADMIN');
@@ -24,7 +26,8 @@ export function AdminLayout() {
 
   return (
     <div className="admin-shell">
-      <aside className="admin-sidebar">
+      {mobileNavOpen && <button type="button" className="admin-nav-backdrop" aria-label="Close navigation" onClick={() => setMobileNavOpen(false)} />}
+      <aside className={`admin-sidebar${mobileNavOpen ? ' is-open' : ''}`}>
         <div className="admin-brand">
           <span className="admin-brand-mark">A</span>
           <div>
@@ -42,6 +45,7 @@ export function AdminLayout() {
               className={({ isActive }) =>
                 isActive ? 'admin-nav-link active' : 'admin-nav-link'
               }
+              onClick={() => setMobileNavOpen(false)}
             >
               {item.label}
               {item.badge === 'pendingBrands' && (
@@ -64,6 +68,15 @@ export function AdminLayout() {
       </aside>
       <div className="admin-main">
         <header className="admin-topbar">
+          <button
+            type="button"
+            className="dashboard-menu-toggle"
+            aria-label={mobileNavOpen ? 'Close navigation menu' : 'Open navigation menu'}
+            aria-expanded={mobileNavOpen}
+            onClick={() => setMobileNavOpen((open) => !open)}
+          >
+            <span /><span /><span />
+          </button>
           <div className="admin-breadcrumb">Platform / Console</div>
           <input
             className="admin-search"

@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 export const StorefrontSubNav: React.FC = () => {
   return (
     <nav
+      className="storefront-subnav"
       style={{
         backgroundColor: '#232f3e',
         color: '#ffffff',

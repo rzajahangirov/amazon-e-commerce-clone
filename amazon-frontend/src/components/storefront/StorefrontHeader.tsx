@@ -17,6 +17,7 @@ export const StorefrontHeader: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState(urlCategory);
   const [prevUrlState, setPrevUrlState] = useState({ query: urlQuery, categoryId: urlCategory });
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   if (prevUrlState.query !== urlQuery || prevUrlState.categoryId !== urlCategory) {
     setPrevUrlState({ query: urlQuery, categoryId: urlCategory });
@@ -43,6 +44,7 @@ export const StorefrontHeader: React.FC = () => {
 
   return (
     <header
+      className="storefront-header"
       style={{
         backgroundColor: '#131921',
         color: '#ffffff',
@@ -59,6 +61,7 @@ export const StorefrontHeader: React.FC = () => {
     >
       {/* Brand Logo */}
       <Link
+        className="storefront-logo"
         to="/"
         style={{
           display: 'flex',
@@ -95,6 +98,7 @@ export const StorefrontHeader: React.FC = () => {
 
       {/* Deliver To Selector */}
       <div
+        className="storefront-delivery"
         style={{
           display: 'flex',
           alignItems: 'center',
@@ -120,6 +124,7 @@ export const StorefrontHeader: React.FC = () => {
 
       {/* Search Bar */}
       <form
+        className="storefront-search-form"
         onSubmit={handleSearchSubmit}
         style={{
           display: 'flex',
@@ -132,6 +137,7 @@ export const StorefrontHeader: React.FC = () => {
         }}
       >
         <select
+          className="storefront-department-select"
           value={selectedCategory}
           onChange={(e) => setSelectedCategory(e.target.value)}
           style={{
@@ -155,6 +161,7 @@ export const StorefrontHeader: React.FC = () => {
         </select>
 
         <input
+          className="storefront-search-input"
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
@@ -194,6 +201,7 @@ export const StorefrontHeader: React.FC = () => {
 
       {/* Language / Region */}
       <div
+        className="storefront-language"
         style={{
           display: 'flex',
           alignItems: 'center',
@@ -213,6 +221,7 @@ export const StorefrontHeader: React.FC = () => {
 
       {/* Account & Lists */}
       <div
+        className="storefront-account"
         style={{ position: 'relative' }}
         onMouseEnter={() => setAccountMenuOpen(true)}
         onMouseLeave={() => setAccountMenuOpen(false)}
@@ -245,9 +254,10 @@ export const StorefrontHeader: React.FC = () => {
         </div>
 
         {/* Dropdown Menu */}
-        {accountMenuOpen && (
-          <div
-            style={{
+          {accountMenuOpen && (
+            <div
+              className="storefront-account-dropdown"
+              style={{
               position: 'absolute',
               top: '100%',
               right: 0,
@@ -373,6 +383,7 @@ export const StorefrontHeader: React.FC = () => {
 
       {/* Returns & Orders */}
       <Link
+        className="storefront-orders-link"
         to="/orders"
         style={{
           textDecoration: 'none',
@@ -392,6 +403,7 @@ export const StorefrontHeader: React.FC = () => {
 
       {/* Cart Icon & Badge */}
       <Link
+        className="storefront-cart-link"
         to="/cart"
         style={{
           textDecoration: 'none',
@@ -430,6 +442,38 @@ export const StorefrontHeader: React.FC = () => {
           Cart
         </span>
       </Link>
+
+      <button
+        type="button"
+        className="storefront-menu-toggle"
+        aria-label={mobileMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
+        aria-expanded={mobileMenuOpen}
+        onClick={() => setMobileMenuOpen((open) => !open)}
+      >
+        <span />
+        <span />
+        <span />
+      </button>
+
+      {mobileMenuOpen && (
+        <nav className="storefront-mobile-menu" aria-label="Mobile navigation">
+          <Link to="/products" onClick={() => setMobileMenuOpen(false)}>All Products</Link>
+          <Link to="/products?badge=DEAL_OF_THE_DAY" onClick={() => setMobileMenuOpen(false)}>Today&apos;s Deals</Link>
+          <Link to="/products?sortBy=BEST_SELLERS" onClick={() => setMobileMenuOpen(false)}>Best Sellers</Link>
+          <Link to="/products?query=monitor" onClick={() => setMobileMenuOpen(false)}>Monitors &amp; Displays</Link>
+          <Link to="/products?query=cable" onClick={() => setMobileMenuOpen(false)}>Enterprise Accessories</Link>
+          <Link to="/wishlist" onClick={() => setMobileMenuOpen(false)}>Your Wish List</Link>
+          <Link to="/orders" onClick={() => setMobileMenuOpen(false)}>Your Orders</Link>
+          <Link to="/brand" onClick={() => setMobileMenuOpen(false)}>Brand Registry</Link>
+          <Link to="/seller" onClick={() => setMobileMenuOpen(false)}>Seller Hub</Link>
+          <Link to="/admin" onClick={() => setMobileMenuOpen(false)}>Admin Console</Link>
+          {isAuthenticated ? (
+            <button type="button" onClick={() => { logout(); setMobileMenuOpen(false); }}>Sign Out</button>
+          ) : (
+            <button type="button" onClick={() => { setMobileMenuOpen(false); openAuthModal('signin'); }}>Sign In</button>
+          )}
+        </nav>
+      )}
     </header>
   );
 };

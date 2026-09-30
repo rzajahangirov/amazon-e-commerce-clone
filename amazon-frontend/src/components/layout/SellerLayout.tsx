@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useCustomerAuth } from '../../context/CustomerAuthContext';
 import { userInitials as formatUserInitials } from '../../utils/format';
@@ -44,6 +45,7 @@ const navSections: NavSection[] = [
 export function SellerLayout() {
   const { user, logout } = useCustomerAuth();
   const navigate = useNavigate();
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   // Dynamic user data from auth context
   const displayName = user?.fullName || user?.email?.split('@')?.[0] || 'Merchant';
@@ -57,7 +59,8 @@ export function SellerLayout() {
 
   return (
     <div className="seller-shell">
-      <aside className="seller-sidebar">
+      {mobileNavOpen && <button type="button" className="seller-nav-backdrop" aria-label="Close navigation" onClick={() => setMobileNavOpen(false)} />}
+      <aside className={`seller-sidebar${mobileNavOpen ? ' is-open' : ''}`}>
         <div className="seller-brand">
           <span className="seller-brand-mark">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -90,6 +93,7 @@ export function SellerLayout() {
                   key={item.to}
                   to={item.to}
                   end={item.end}
+                  onClick={() => setMobileNavOpen(false)}
                   className={({ isActive }) =>
                     isActive ? 'seller-nav-link active' : 'seller-nav-link'
                   }
@@ -110,6 +114,15 @@ export function SellerLayout() {
 
       <div className="seller-main">
         <header className="seller-topbar">
+          <button
+            type="button"
+            className="dashboard-menu-toggle"
+            aria-label={mobileNavOpen ? 'Close navigation menu' : 'Open navigation menu'}
+            aria-expanded={mobileNavOpen}
+            onClick={() => setMobileNavOpen((open) => !open)}
+          >
+            <span /><span /><span />
+          </button>
           <div className="seller-search-wrap">
             <span className="seller-search-icon">🔍</span>
             <input
